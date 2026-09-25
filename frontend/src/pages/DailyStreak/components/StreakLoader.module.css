@@ -1,0 +1,120 @@
+.screen {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 24px;
+  text-align: center;
+}
+
+.emblem {
+  position: relative;
+  width: 132px;
+  height: 132px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 18px;
+}
+
+.ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, transparent 0 55%, rgba(139, 92, 246, 0.9) 75%, #fbbf24 100%);
+  mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px));
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px));
+  animation: spin 1.3s linear infinite;
+}
+
+.halo {
+  position: absolute;
+  inset: 14px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(124, 58, 237, 0.35), transparent 70%);
+  animation: pulse 2.2s ease-in-out infinite;
+}
+
+.logo {
+  position: relative;
+  filter: drop-shadow(0 0 14px rgba(251, 191, 36, 0.35));
+}
+
+.flame {
+  position: absolute;
+  width: 34px;
+  right: 14px;
+  bottom: 12px;
+  animation: flicker 1.6s ease-in-out infinite;
+}
+
+.brand {
+  margin: 0;
+  font-family: var(--vl-font-display);
+  font-weight: 800;
+  font-size: 1.35rem;
+  letter-spacing: 0.02em;
+}
+
+.brand span {
+  background: var(--vl-gold-grad);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.message {
+  margin: 0;
+  color: var(--vl-muted);
+  font-size: 0.95rem;
+}
+
+.dots {
+  display: inline-flex;
+  gap: 3px;
+  margin-left: 4px;
+}
+
+.dots i {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--vl-purple-2);
+  animation: bounce 1s ease-in-out infinite;
+}
+
+.dots i:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.dots i:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.55;
+    transform: scale(0.94);
+  }
+}
+
+@keyframes flicker {
+  50% {
+    transform: translateY(-3px) scale(1.06);
+  }
+}
+
+@keyframes bounce {
+  50% {
+    transform: translateY(-4px);
+    opacity: 0.5;
+  }
+}

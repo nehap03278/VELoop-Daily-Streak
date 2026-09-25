@@ -1,0 +1,286 @@
+.page {
+  min-height: 100vh;
+  padding-bottom: 32px;
+}
+
+.container {
+  max-width: 960px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 0;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.hello {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--vl-muted);
+}
+
+.brandName {
+  margin: 0;
+  font-family: var(--vl-font-display);
+  font-size: 1.2rem;
+  font-weight: 800;
+}
+
+.brandName span {
+  background: var(--vl-gold-grad);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.logout {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--vl-border);
+  background: rgba(29, 18, 55, 0.6);
+  color: var(--vl-muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.logout:hover {
+  color: var(--vl-text);
+}
+
+.cardLabel {
+  margin: 0 0 8px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--vl-muted);
+}
+
+.balanceCard,
+.streakCard,
+.ledger,
+.dev {
+  border-radius: var(--vl-radius-lg);
+  border: 1px solid var(--vl-border);
+  background: linear-gradient(180deg, rgba(29, 18, 55, 0.7), rgba(14, 8, 27, 0.8));
+  box-shadow: var(--vl-shadow-card);
+}
+
+.balanceCard {
+  height: 100%;
+  padding: 18px;
+}
+
+.balances {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.balances > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.balances strong {
+  min-height: 1.6rem;
+  font-family: var(--vl-font-display);
+  font-size: 1.6rem;
+  font-weight: 800;
+}
+
+.balances small {
+  color: var(--vl-muted);
+}
+
+.gem {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: #ede9fe;
+  background: radial-gradient(circle at 35% 30%, #c4b5fd, #7c3aed 60%, #4c1d95);
+}
+
+.goldGem {
+  color: #2b1800;
+  background: radial-gradient(circle at 35% 30%, #fde68a, #f59e0b 70%);
+}
+
+.streakCard {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px;
+  color: var(--vl-text);
+  text-decoration: none;
+  border-color: rgba(251, 191, 36, 0.45);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.streakCard:hover {
+  color: var(--vl-text);
+  transform: translateY(-2px);
+  box-shadow: var(--vl-shadow-card), var(--vl-glow-gold);
+}
+
+.flame {
+  width: 54px;
+  animation: flicker 2.2s ease-in-out infinite;
+}
+
+.streakBody {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.streakBody strong {
+  min-height: 1.5rem;
+  font-family: var(--vl-font-display);
+  font-size: 1.35rem;
+  color: var(--vl-gold);
+}
+
+.streakBody span {
+  font-size: 0.85rem;
+  color: var(--vl-muted);
+}
+
+.ledger,
+.dev {
+  margin-top: 16px;
+  padding: 18px;
+}
+
+.sectionTitle {
+  margin: 0 0 12px;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+}
+
+.row + .row {
+  border-top: 1px solid rgba(139, 92, 246, 0.12);
+}
+
+.row div {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.row strong {
+  font-size: 0.9rem;
+}
+
+.row span {
+  font-size: 0.75rem;
+  color: var(--vl-dim);
+  overflow-wrap: anywhere;
+}
+
+.amount {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.amount strong {
+  color: var(--vl-green-2);
+}
+
+.empty {
+  color: var(--vl-muted);
+  font-size: 0.9rem;
+}
+
+.error {
+  padding: 12px 14px;
+  border-radius: 12px;
+  color: #fecaca;
+  background: rgba(248, 113, 113, 0.1);
+  border: 1px solid rgba(248, 113, 113, 0.35);
+}
+
+.error button {
+  border: 0;
+  background: none;
+  color: var(--vl-gold);
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+.dev {
+  border-style: dashed;
+}
+
+.dev button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--vl-border-strong);
+  background: rgba(76, 29, 149, 0.3);
+  color: var(--vl-purple-3);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.devText {
+  margin: 0 0 10px;
+  font-size: 0.82rem;
+  color: var(--vl-muted);
+}
+
+.devText + div + .devText {
+  margin: 10px 0 0;
+}
+
+.shimmer {
+  display: inline-block;
+  width: 90px;
+  border-radius: 8px;
+  background: linear-gradient(100deg, transparent 20%, rgba(167, 139, 250, 0.16) 50%, transparent 80%) 0 0 / 220% 100%, rgba(139, 92, 246, 0.1);
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 120% 0, 0 0;
+  }
+  to {
+    background-position: -120% 0, 0 0;
+  }
+}
+
+@keyframes flicker {
+  50% {
+    transform: translateY(-3px) scale(1.04);
+  }
+}

@@ -1,0 +1,26 @@
+# Render blueprint for the backend API (frontend deploys to Vercel/Netlify from /frontend).
+services:
+  - type: web
+    name: veloop-daily-streak-api
+    runtime: node
+    rootDir: backend
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGO_URI
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: CLIENT_URL
+        sync: false
+      - key: TRUST_PROXY
+        value: "true"
+      - key: REQUIRE_TRANSACTIONS
+        value: "true"
+      - key: ENABLE_DEV_TOOLS
+        value: "false"

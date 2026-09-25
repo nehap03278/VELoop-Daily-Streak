@@ -1,0 +1,138 @@
+.block {
+  display: block;
+  border-radius: 8px;
+  background:
+    linear-gradient(100deg, transparent 20%, rgba(167, 139, 250, 0.14) 45%, rgba(251, 191, 36, 0.06) 55%, transparent 80%) 0 0 / 220% 100%,
+    rgba(139, 92, 246, 0.1);
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+.panel {
+  border-radius: var(--vl-radius-lg);
+  border: 1px solid var(--vl-border);
+  background: linear-gradient(180deg, rgba(29, 18, 55, 0.55), rgba(17, 10, 32, 0.55));
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 0;
+}
+
+.circle {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.mobileHero {
+  height: 132px;
+  border-radius: var(--vl-radius-lg);
+  margin-bottom: 14px;
+}
+
+.heroPanel {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.heroTop {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+}
+
+.heroArt {
+  width: 200px;
+  height: 150px;
+  border-radius: 20px;
+  flex-shrink: 0;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.stat {
+  height: 62px;
+  border-radius: 14px;
+}
+
+.ultimateCompact {
+  height: 128px;
+  border-radius: 16px;
+}
+
+.ultimate {
+  padding: 22px;
+  gap: 18px;
+  align-items: center;
+}
+
+.ultimateArt {
+  width: 45%;
+  aspect-ratio: 1.4;
+  border-radius: 50%;
+}
+
+.message {
+  width: min(320px, 80%);
+  height: 16px;
+  margin: 22px auto 16px;
+}
+
+.card {
+  padding: 12px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.cardArt {
+  width: 64%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+}
+
+.info {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  padding: 18px;
+  margin-top: 18px;
+}
+
+.infoItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.footer {
+  height: 58px;
+  border-radius: var(--vl-radius);
+  margin: 14px 0 28px;
+}
+
+@media (min-width: 768px) {
+  .heroPanel {
+    padding: 24px;
+  }
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 120% 0, 0 0;
+  }
+  to {
+    background-position: -120% 0, 0 0;
+  }
+}

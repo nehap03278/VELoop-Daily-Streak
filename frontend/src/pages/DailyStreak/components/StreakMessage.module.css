@@ -1,0 +1,39 @@
+.message {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin: 18px 0 14px;
+  color: #ddd6fe;
+  font-size: 0.86rem;
+  text-align: center;
+}
+
+.text {
+  min-width: 0;
+}
+
+.sub {
+  color: var(--vl-muted);
+  white-space: nowrap;
+}
+
+.time {
+  color: var(--vl-gold);
+  font-variant-numeric: tabular-nums;
+}
+
+.spark {
+  flex-shrink: 0;
+  width: 12px;
+  height: 12px;
+  background: var(--vl-purple-2);
+  clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%);
+}
+
+@media (min-width: 768px) {
+  .message {
+    font-size: 1rem;
+    margin: 26px 0 18px;
+  }
+}

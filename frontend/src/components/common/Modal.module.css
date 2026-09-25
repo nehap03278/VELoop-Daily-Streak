@@ -1,0 +1,73 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1050;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(4, 1, 10, 0.78);
+  backdrop-filter: blur(6px);
+  animation: fadeIn 0.2s ease-out;
+}
+
+.dialog {
+  position: relative;
+  width: 100%;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  border-radius: var(--vl-radius-lg);
+  border: 1px solid var(--vl-border-strong);
+  background:
+    radial-gradient(420px 220px at 50% 0%, rgba(124, 58, 237, 0.28), transparent 70%),
+    linear-gradient(180deg, #181030 0%, #0e0819 100%);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6), var(--vl-glow-purple);
+  animation: popIn 0.28s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+  outline: none;
+}
+
+.sm {
+  max-width: 400px;
+}
+
+.md {
+  max-width: 460px;
+}
+
+.lg {
+  max-width: 640px;
+}
+
+.close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 2;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid var(--vl-border);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--vl-muted);
+  transition: color 0.2s, background 0.2s;
+}
+
+.close:hover {
+  color: var(--vl-text);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes popIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.96);
+  }
+}

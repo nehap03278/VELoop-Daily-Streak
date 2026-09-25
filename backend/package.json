@@ -1,0 +1,38 @@
+{
+  "name": "veloop-daily-streak-backend",
+  "version": "1.0.0",
+  "description": "VELoop Rewards - Daily Streak API (Node.js + Express + MongoDB)",
+  "main": "src/server.js",
+  "private": true,
+  "engines": {
+    "node": ">=18.18"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "seed": "node seed/seed.js",
+    "test": "jest --runInBand",
+    "test:replset": "node -e \"process.env.TEST_MONGO_URI=process.env.TEST_MONGO_URI||'mongodb://127.0.0.1:27018/?replicaSet=rs0';require('child_process').execSync('npx jest --runInBand',{stdio:'inherit'})\""
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "testTimeout": 30000
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
+    "dotenv": "^18.0.3",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.7.0",
+    "helmet": "^8.3.0",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^8.24.4",
+    "morgan": "^1.12.1",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "jest": "^30.5.2",
+    "nodemon": "^3.1.14",
+    "supertest": "^7.3.0"
+  }
+}

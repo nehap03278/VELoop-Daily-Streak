@@ -1,0 +1,132 @@
+/* Page-level layout. Section styling lives in each component's CSS module. */
+.page {
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding-top: env(safe-area-inset-top);
+}
+
+.container {
+  padding-left: 12px;
+  padding-right: 12px;
+  max-width: 1400px;
+}
+
+/* ---------- Hero row (tablet / desktop) ---------- */
+.heroGrid {
+  /* Tablet: stacked full-width panels; desktop: side by side (see >= 1200px). */
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+}
+
+/* ---------- Day cards ----------
+   Mobile / tablet: 4 cards on the first row, 3 wider cards on the second (as in the mobile design).
+   Very small phones (< 360px): 2 columns, Day 7 spans the full width.
+   Desktop (>= 1200px): all 7 in one row (as in the desktop design). */
+.cardGrid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.cardGrid > * {
+  grid-column: span 3;
+}
+
+.cardGrid > :nth-child(n + 5) {
+  grid-column: span 4;
+}
+
+@media (max-width: 359.98px) {
+  .cardGrid > *,
+  .cardGrid > :nth-child(n + 5) {
+    grid-column: span 6;
+  }
+
+  .cardGrid > :nth-child(7) {
+    grid-column: span 12;
+  }
+}
+
+@media (min-width: 576px) {
+  .container {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .cardGrid {
+    gap: 12px;
+  }
+}
+
+@media (min-width: 768px) {
+  .container {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+
+  .cardGrid {
+    gap: 14px;
+  }
+}
+
+@media (min-width: 1200px) {
+  .heroGrid {
+    grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
+    gap: 20px;
+  }
+
+  .cardGrid {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  .cardGrid > *,
+  .cardGrid > :nth-child(n + 5) {
+    grid-column: auto;
+  }
+}
+
+@media (min-width: 1600px) {
+  .container {
+    max-width: 1520px;
+  }
+}
+
+/* ---------- Refresh error toast ---------- */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(16px + env(safe-area-inset-bottom));
+  z-index: 1040;
+  transform: translateX(-50%);
+  width: min(92vw, 440px);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(248, 113, 113, 0.4);
+  background: #1f0f1f;
+  color: #fecaca;
+  font-size: 0.88rem;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+  animation: rise 0.3s ease-out;
+}
+
+.toast span {
+  flex: 1;
+}
+
+.toast button {
+  border: 0;
+  background: none;
+  color: inherit;
+  padding: 2px;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 10px);
+  }
+}
