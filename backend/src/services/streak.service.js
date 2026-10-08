@@ -199,7 +199,9 @@ async function getDailyStreak(user, ctx = {}) {
 
   const claimsByDay = new Map(claims.map((claim) => [claim.day, claim]));
   const rewardDTOs = rewards.map(rewardService.toRewardDTO);
-  const cards = buildDayStates({ evaluation, rewards, claimsByDay }).map((card, index) => ({
+  const resetNotice = buildResetNotice(streak, totalDays);
+  const missedDay = resetNotice ? resetNotice.missedDay : null;
+  const cards = buildDayStates({ evaluation, rewards, claimsByDay, missedDay }).map((card, index) => ({
     ...card,
     reward: rewardDTOs[index],
   }));
@@ -222,9 +224,10 @@ async function getDailyStreak(user, ctx = {}) {
       ...rewardService.toRewardDTO(ultimate),
       unlockDay: ultimate.day,
       status: ultimateCard ? ultimateCard.status : 'LOCKED',
+      state: ultimateCard ? ultimateCard.state : 'LOCKED',
     },
     rewards: cards,
-    resetNotice: buildResetNotice(streak, totalDays),
+    resetNotice,
     cpa: { required: config.requireCpaVerification, durationSeconds: config.cpaDemoSeconds },
     rules: {
       claimIntervalMinutes: config.claimIntervalMinutes,

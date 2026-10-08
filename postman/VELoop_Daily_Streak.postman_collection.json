@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "VELoop Rewards - Daily Streak API",
-    "description": "End-to-end and negative tests for the Daily Streak API. Run the whole collection in order (Collection Runner or newman).\n\nPrerequisites: backend running with seeded data (`npm run seed`) and ENABLE_DEV_TOOLS=true. The collection uses the QA-only /api/dev endpoints to reset the demo account and to simulate time passing for that account.",
+    "description": "Two independent folders:\n\n* **Production / Live Flow**: public endpoints only; runs against the deployed API or locally. `newman run <file> --folder \"Production / Live Flow\" --env-var baseUrl=https://<api>/api`\n* **Local QA Only**: needs a local backend with NODE_ENV=development and ENABLE_DEV_TOOLS=true (uses /api/dev/*, which returns 404 in production).\n\nBoth folders need seeded data (`npm run seed`). Running the whole collection locally executes both.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -24,1209 +24,1730 @@
     {
       "key": "walletBefore",
       "value": ""
+    },
+    {
+      "key": "liveEmail",
+      "value": ""
     }
   ],
   "item": [
     {
-      "name": "1. Auth",
+      "name": "Production / Live Flow",
+      "description": "Runs against any environment, including the deployed production API (set `baseUrl`). Registers a fresh user each run, claims Day 1 through the CPA flow and runs the security/negative tests that do not need time travel. Requires the seeded demo users for the cross-user test. Contains no /api/dev requests.",
       "item": [
         {
-          "name": "Login (demo user)",
-          "event": [
+          "name": "1. Auth",
+          "item": [
             {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('status 200', () => pm.response.to.have.status(200));",
-                  "pm.collectionVariables.set('token', pm.response.json().token);"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"demo@veloop.in\",\n  \"password\": \"Demo@1234\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/auth/login",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "auth",
-                "login"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Login (second demo user)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('status 200', () => pm.response.to.have.status(200));",
-                  "pm.collectionVariables.set('token2', pm.response.json().token);"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"demo2@veloop.in\",\n  \"password\": \"Demo@1234\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/auth/login",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "auth",
-                "login"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Me",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('status 200', () => pm.response.to.have.status(200));",
-                  "pm.test('email', () => pm.expect(pm.response.json().user.email).to.eql('demo@veloop.in'));"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/auth/me",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "auth",
-                "me"
-              ]
-            }
-          }
-        },
-        {
-          "name": "[neg] Wrong password",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('status 401', () => pm.response.to.have.status(401));",
-                  "pm.test('error code INVALID_CREDENTIALS', () => pm.expect(pm.response.json().error.code).to.eql('INVALID_CREDENTIALS'));"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"demo@veloop.in\",\n  \"password\": \"wrong-pass1\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/auth/login",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "auth",
-                "login"
-              ]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "2. Setup (QA only)",
-      "item": [
-        {
-          "name": "Reset my streak (dev tool)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('status 200', () => pm.response.to.have.status(200));",
-                  "pm.test('Day 1 available', () => { const s = pm.response.json().streak; pm.expect(s.currentDay).to.eql(1); pm.expect(s.claimable).to.eql(true); });"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "description": "Clears the demo user streak so the run is repeatable. Requires ENABLE_DEV_TOOLS=true. The wallet ledger is never deleted.",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/dev/reset-my-streak",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "dev",
-                "reset-my-streak"
-              ]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "3. Claim flow",
-      "item": [
-        {
-          "name": "Get streak",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('status 200', () => pm.response.to.have.status(200));",
-                  "const d = pm.response.json();",
-                  "pm.test('backend provides serverTime', () => pm.expect(d.serverTime).to.be.a('string'));",
-                  "pm.test('7 reward cards from DB config', () => pm.expect(d.rewards).to.have.length(7));",
-                  "pm.test('Day 1 AVAILABLE', () => pm.expect(d.rewards[0].status).to.eql('AVAILABLE'));",
-                  "pm.collectionVariables.set('walletBefore', d.wallet.VES);"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/daily-streak",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "daily-streak"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Get status",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('status 200', () => pm.response.to.have.status(200));",
-                  "pm.test('current day 1', () => pm.expect(pm.response.json().streak.currentDay).to.eql(1));"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/daily-streak/status",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "daily-streak",
-                "status"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Claim Day 1 - start (CPA session)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('status 202', () => pm.response.to.have.status(202));",
-                  "const s = pm.response.json().claimSession; pm.test('day 1', () => pm.expect(s.day).to.eql(1)); pm.collectionVariables.set('sessionId', s.id);"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/daily-streak/claim/start",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "daily-streak",
-                "claim",
-                "start"
-              ]
-            }
-          }
-        },
-        {
-          "name": "[neg] Confirm before CPA finished",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('status 425', () => pm.response.to.have.status(425));",
-                  "pm.test('error code CPA_NOT_COMPLETED', () => pm.expect(pm.response.json().error.code).to.eql('CPA_NOT_COMPLETED'));"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"claimSessionId\": \"{{sessionId}}\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/daily-streak/claim",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "daily-streak",
-                "claim"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Claim Day 1 - confirm",
-          "event": [
-            {
-              "listen": "prerequest",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "// Wait for the server-side CPA demo window (cpaDemoSeconds = 5).",
-                  "setTimeout(() => {}, 5500);"
-                ]
-              }
-            },
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('status 200', () => pm.response.to.have.status(200));",
-                  "const d = pm.response.json();",
-                  "pm.test('granted configured reward', () => { pm.expect(d.transaction.amount).to.eql(5); pm.expect(d.transaction.currency).to.eql('VES'); });",
-                  "pm.test('ledger balances', () => pm.expect(d.transaction.balanceAfter - d.transaction.balanceBefore).to.eql(5));",
-                  "pm.test('reference id', () => pm.expect(d.claim.referenceId).to.match(/^STREAK-/));"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"claimSessionId\": \"{{sessionId}}\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/daily-streak/claim",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "daily-streak",
-                "claim"
-              ]
-            }
-          }
-        },
-        {
-          "name": "[neg] Duplicate confirm (idempotent)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('status 200', () => pm.response.to.have.status(200));",
-                  "pm.test('idempotent replay, no new credit', () => pm.expect(pm.response.json().idempotent).to.eql(true));"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"claimSessionId\": \"{{sessionId}}\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/daily-streak/claim",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "daily-streak",
-                "claim"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Get updated streak",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('status 200', () => pm.response.to.have.status(200));",
-                  "const d = pm.response.json();",
-                  "pm.test('Day 1 CLAIMED', () => pm.expect(d.rewards[0].status).to.eql('CLAIMED'));",
-                  "pm.test('Day 2 LOCKED with nextClaimAt', () => { pm.expect(d.rewards[1].status).to.eql('LOCKED'); pm.expect(d.streak.nextClaimAt).to.be.a('string'); });",
-                  "pm.test('wallet credited exactly once', () => pm.expect(d.wallet.VES).to.eql(Number(pm.collectionVariables.get('walletBefore')) + 5));"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/daily-streak",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "daily-streak"
-              ]
-            }
-          }
-        },
-        {
-          "name": "[neg] Claim locked Day 2",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('status 409', () => pm.response.to.have.status(409));",
-                  "pm.test('error code REWARD_LOCKED', () => pm.expect(pm.response.json().error.code).to.eql('REWARD_LOCKED'));"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/daily-streak/claim/start",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "daily-streak",
-                "claim",
-                "start"
-              ]
-            }
-          }
-        },
-        {
-          "name": "[neg] Re-claim Day 1",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('status 409', () => pm.response.to.have.status(409));",
-                  "pm.test('error code ALREADY_CLAIMED', () => pm.expect(pm.response.json().error.code).to.eql('ALREADY_CLAIMED'));"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"day\": 1\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/daily-streak/claim/start",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "daily-streak",
-                "claim",
-                "start"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Simulate +24h (dev tool)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('status 200', () => pm.response.to.have.status(200));",
-                  "pm.test('Day 2 now claimable', () => pm.expect(pm.response.json().streak.claimable).to.eql(true));"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"hours\": 24\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/dev/time-travel",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "dev",
-                "time-travel"
-              ]
-            }
-          }
-        },
-        {
-          "name": "[neg] Jump to Day 7",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('status 403', () => pm.response.to.have.status(403));",
-                  "pm.test('error code DAY_NOT_ELIGIBLE', () => pm.expect(pm.response.json().error.code).to.eql('DAY_NOT_ELIGIBLE'));"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"day\": 7\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/daily-streak/claim/start",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "daily-streak",
-                "claim",
-                "start"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Claim Day 2 - start (with fake reward/user fields)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('status 202', () => pm.response.to.have.status(202));",
-                  "pm.collectionVariables.set('sessionId', pm.response.json().claimSession.id);"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "description": "All tampering fields are ignored (and audit-logged as TAMPERED_REQUEST); only the backend-configured reward is granted.",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"day\": 2,\n  \"reward\": 1000000,\n  \"amount\": 100000,\n  \"currency\": \"INR\",\n  \"streak\": 7,\n  \"userId\": \"anotherUser\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/daily-streak/claim/start",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "daily-streak",
-                "claim",
-                "start"
-              ]
-            }
-          }
-        },
-        {
-          "name": "[neg] Other user cannot confirm this session",
-          "event": [
-            {
-              "listen": "prerequest",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "// Wait for the server-side CPA demo window (cpaDemoSeconds = 5).",
-                  "setTimeout(() => {}, 5500);"
-                ]
-              }
-            },
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('status 404', () => pm.response.to.have.status(404));",
-                  "pm.test('error code CLAIM_SESSION_NOT_FOUND', () => pm.expect(pm.response.json().error.code).to.eql('CLAIM_SESSION_NOT_FOUND'));"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token2}}"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"claimSessionId\": \"{{sessionId}}\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/daily-streak/claim",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "daily-streak",
-                "claim"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Claim Day 2 - confirm",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('status 200', () => pm.response.to.have.status(200));",
-                  "pm.test('fake reward ignored: +10 VEs', () => { const t = pm.response.json().transaction; pm.expect(t.amount).to.eql(10); pm.expect(t.currency).to.eql('VES'); });",
-                  "pm.test('real streak = 2', () => pm.expect(pm.response.json().streak.currentStreak).to.eql(2));"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"claimSessionId\": \"{{sessionId}}\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/daily-streak/claim",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "daily-streak",
-                "claim"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Get history",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('status 200', () => pm.response.to.have.status(200));",
-                  "pm.test('latest claim is Day 2', () => pm.expect(pm.response.json().claims[0].day).to.eql(2));"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/daily-streak/history?page=1&limit=10",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "daily-streak",
-                "history"
-              ],
-              "query": [
+              "name": "Register (fresh user)",
+              "event": [
                 {
-                  "key": "page",
-                  "value": "1"
+                  "listen": "prerequest",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.collectionVariables.set('liveEmail', `qa.${Date.now()}@example.com`);"
+                    ]
+                  }
                 },
                 {
-                  "key": "limit",
-                  "value": "10"
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('status 201', () => pm.response.to.have.status(201));",
+                      "pm.collectionVariables.set('token', pm.response.json().token);"
+                    ]
+                  }
                 }
-              ]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "4. Missed day & reset",
-      "item": [
-        {
-          "name": "Simulate +49h (miss Day 3)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('status 200', () => pm.response.to.have.status(200));",
-                  "pm.test('streak reset to Day 1', () => { const s = pm.response.json().streak; pm.expect(s.status).to.eql('RESET'); pm.expect(s.currentStreak).to.eql(0); pm.expect(s.currentDay).to.eql(1); });"
-                ]
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Postman QA\",\n  \"email\": \"{{liveEmail}}\",\n  \"password\": \"Passw0rd!\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/auth/register",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "register"
+                  ]
+                }
               }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"hours\": 49\n}"
             },
-            "url": {
-              "raw": "{{baseUrl}}/dev/time-travel",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "dev",
-                "time-travel"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Get streak after reset",
-          "event": [
             {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('status 200', () => pm.response.to.have.status(200));",
-                  "pm.test('reset notice shows missed Day 3', () => pm.expect(pm.response.json().resetNotice.missedDay).to.eql(3));"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/daily-streak",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "daily-streak"
-              ]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "5. Security / validation",
-      "item": [
-        {
-          "name": "[neg] No token",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('status 401', () => pm.response.to.have.status(401));",
-                  "pm.test('error code UNAUTHORIZED', () => pm.expect(pm.response.json().error.code).to.eql('UNAUTHORIZED'));"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/daily-streak",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "daily-streak"
-              ]
-            }
-          }
-        },
-        {
-          "name": "[neg] Forged token",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('status 401', () => pm.response.to.have.status(401));"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiI2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjYifQ.invalidsignature"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/daily-streak",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "daily-streak"
-              ]
-            }
-          }
-        },
-        {
-          "name": "[neg] Invalid day type",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('status 400', () => pm.response.to.have.status(400));",
-                  "pm.test('error code VALIDATION_ERROR', () => pm.expect(pm.response.json().error.code).to.eql('VALIDATION_ERROR'));"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"day\": \"abc\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/daily-streak/claim/start",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "daily-streak",
-                "claim",
-                "start"
-              ]
-            }
-          }
-        },
-        {
-          "name": "[neg] Malformed JSON",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('status 400', () => pm.response.to.have.status(400));",
-                  "pm.test('error code INVALID_JSON', () => pm.expect(pm.response.json().error.code).to.eql('INVALID_JSON'));"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\"day\": 1,"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/daily-streak/claim/start",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "daily-streak",
-                "claim",
-                "start"
-              ]
-            }
-          }
-        },
-        {
-          "name": "[neg] Missing CPA session",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('status 400', () => pm.response.to.have.status(400));",
-                  "pm.test('error code CPA_VERIFICATION_REQUIRED', () => pm.expect(pm.response.json().error.code).to.eql('CPA_VERIFICATION_REQUIRED'));"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/daily-streak/claim",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "daily-streak",
-                "claim"
-              ]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "6. Wallet",
-      "item": [
-        {
-          "name": "Get wallet",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('status 200', () => pm.response.to.have.status(200));"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/wallet",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "wallet"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Get transactions",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('status 200', () => pm.response.to.have.status(200));",
-                  "pm.test('ledger has streak credits', () => pm.expect(pm.response.json().items.some((t) => t.source === 'DAILY_STREAK')).to.eql(true));"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/wallet/transactions?page=1&limit=10",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "wallet",
-                "transactions"
-              ],
-              "query": [
+              "name": "Login (fresh user)",
+              "event": [
                 {
-                  "key": "page",
-                  "value": "1"
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('status 200', () => pm.response.to.have.status(200));",
+                      "pm.collectionVariables.set('token', pm.response.json().token);"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"{{liveEmail}}\",\n  \"password\": \"Passw0rd!\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/auth/login",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "login"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Login (second demo user)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('status 200', () => pm.response.to.have.status(200));",
+                      "pm.collectionVariables.set('token2', pm.response.json().token);"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"demo2@veloop.in\",\n  \"password\": \"Demo@1234\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/auth/login",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "login"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Me",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('status 200', () => pm.response.to.have.status(200));",
+                      "pm.test('token owner', () => pm.expect(pm.response.json().user.email).to.eql(pm.collectionVariables.get('liveEmail')));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/auth/me",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "me"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "[neg] Wrong password",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('status 401', () => pm.response.to.have.status(401));",
+                      "pm.test('error code INVALID_CREDENTIALS', () => pm.expect(pm.response.json().error.code).to.eql('INVALID_CREDENTIALS'));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"demo@veloop.in\",\n  \"password\": \"wrong-pass1\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/auth/login",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "login"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "2. Claim Day 1",
+          "item": [
+            {
+              "name": "Get streak",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('status 200', () => pm.response.to.have.status(200));",
+                      "const d = pm.response.json();",
+                      "pm.test('backend provides serverTime', () => pm.expect(d.serverTime).to.be.a('string'));",
+                      "pm.test('7 reward cards from DB config', () => pm.expect(d.rewards).to.have.length(7));",
+                      "pm.test('Day 1 AVAILABLE', () => pm.expect(d.rewards[0].status).to.eql('AVAILABLE'));",
+                      "pm.test('Day 1 state TODAY (backend-decided)', () => pm.expect(d.rewards[0].state).to.eql('TODAY'));",
+                      "pm.test('future days LOCKED', () => pm.expect(d.rewards.slice(1).every((c) => c.state === 'LOCKED')).to.eql(true));",
+                      "pm.collectionVariables.set('walletBefore', d.wallet.VES);"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/daily-streak",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "daily-streak"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Get status",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('status 200', () => pm.response.to.have.status(200));",
+                      "pm.test('current day 1', () => pm.expect(pm.response.json().streak.currentDay).to.eql(1));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/daily-streak/status",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "daily-streak",
+                    "status"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "[neg] Jump to Day 7",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('status 403', () => pm.response.to.have.status(403));",
+                      "pm.test('error code DAY_NOT_ELIGIBLE', () => pm.expect(pm.response.json().error.code).to.eql('DAY_NOT_ELIGIBLE'));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"day\": 7\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/daily-streak/claim/start",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "daily-streak",
+                    "claim",
+                    "start"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Claim Day 1 - start (with fake reward/streak/user fields)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('status 202', () => pm.response.to.have.status(202));",
+                      "const s = pm.response.json().claimSession; pm.test('day 1', () => pm.expect(s.day).to.eql(1)); pm.collectionVariables.set('sessionId', s.id);"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "description": "All tampering fields are ignored (and audit-logged as TAMPERED_REQUEST); only the backend-configured reward is granted.",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"day\": 1,\n  \"reward\": 1000000,\n  \"amount\": 100000,\n  \"currency\": \"INR\",\n  \"streak\": 7,\n  \"userId\": \"anotherUser\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/daily-streak/claim/start",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "daily-streak",
+                    "claim",
+                    "start"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "[neg] Confirm before CPA finished",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('status 425', () => pm.response.to.have.status(425));",
+                      "pm.test('error code CPA_NOT_COMPLETED', () => pm.expect(pm.response.json().error.code).to.eql('CPA_NOT_COMPLETED'));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"claimSessionId\": \"{{sessionId}}\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/daily-streak/claim",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "daily-streak",
+                    "claim"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "[neg] Other user cannot confirm this session",
+              "event": [
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "// Wait for the server-side CPA demo window (cpaDemoSeconds = 5).",
+                      "setTimeout(() => {}, 5500);"
+                    ]
+                  }
                 },
                 {
-                  "key": "limit",
-                  "value": "10"
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('status 404', () => pm.response.to.have.status(404));",
+                      "pm.test('error code CLAIM_SESSION_NOT_FOUND', () => pm.expect(pm.response.json().error.code).to.eql('CLAIM_SESSION_NOT_FOUND'));"
+                    ]
+                  }
                 }
-              ]
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token2}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"claimSessionId\": \"{{sessionId}}\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/daily-streak/claim",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "daily-streak",
+                    "claim"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Claim Day 1 - confirm",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('status 200', () => pm.response.to.have.status(200));",
+                      "const d = pm.response.json();",
+                      "pm.test('fake reward ignored: configured +5 VEs', () => { pm.expect(d.transaction.amount).to.eql(5); pm.expect(d.transaction.currency).to.eql('VES'); });",
+                      "pm.test('ledger balances', () => pm.expect(d.transaction.balanceAfter - d.transaction.balanceBefore).to.eql(5));",
+                      "pm.test('reference id', () => pm.expect(d.claim.referenceId).to.match(/^STREAK-/));",
+                      "pm.test('real streak = 1 (fake streak ignored)', () => pm.expect(d.streak.currentStreak).to.eql(1));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"claimSessionId\": \"{{sessionId}}\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/daily-streak/claim",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "daily-streak",
+                    "claim"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "[neg] Duplicate confirm (idempotent)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('status 200', () => pm.response.to.have.status(200));",
+                      "pm.test('idempotent replay, no new credit', () => pm.expect(pm.response.json().idempotent).to.eql(true));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"claimSessionId\": \"{{sessionId}}\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/daily-streak/claim",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "daily-streak",
+                    "claim"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Verify Day 1 (updated streak)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('status 200', () => pm.response.to.have.status(200));",
+                      "const d = pm.response.json();",
+                      "pm.test('Day 1 CLAIMED', () => { pm.expect(d.rewards[0].status).to.eql('CLAIMED'); pm.expect(d.rewards[0].state).to.eql('CLAIMED'); });",
+                      "pm.test('Day 2 LOCKED with nextClaimAt', () => { pm.expect(d.rewards[1].status).to.eql('LOCKED'); pm.expect(d.rewards[1].state).to.eql('LOCKED'); pm.expect(d.streak.nextClaimAt).to.be.a('string'); });",
+                      "pm.test('wallet credited exactly once', () => pm.expect(d.wallet.VES).to.eql(Number(pm.collectionVariables.get('walletBefore')) + 5));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/daily-streak",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "daily-streak"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "[neg] Claim locked Day 2",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('status 409', () => pm.response.to.have.status(409));",
+                      "pm.test('error code REWARD_LOCKED', () => pm.expect(pm.response.json().error.code).to.eql('REWARD_LOCKED'));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/daily-streak/claim/start",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "daily-streak",
+                    "claim",
+                    "start"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "[neg] Re-claim Day 1",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('status 409', () => pm.response.to.have.status(409));",
+                      "pm.test('error code ALREADY_CLAIMED', () => pm.expect(pm.response.json().error.code).to.eql('ALREADY_CLAIMED'));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"day\": 1\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/daily-streak/claim/start",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "daily-streak",
+                    "claim",
+                    "start"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Get history",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('status 200', () => pm.response.to.have.status(200));",
+                      "pm.test('latest claim is Day 1', () => pm.expect(pm.response.json().claims[0].day).to.eql(1));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/daily-streak/history?page=1&limit=10",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "daily-streak",
+                    "history"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "10"
+                    }
+                  ]
+                }
+              }
             }
-          }
+          ]
+        },
+        {
+          "name": "3. Security / validation",
+          "item": [
+            {
+              "name": "[neg] No token",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('status 401', () => pm.response.to.have.status(401));",
+                      "pm.test('error code UNAUTHORIZED', () => pm.expect(pm.response.json().error.code).to.eql('UNAUTHORIZED'));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/daily-streak",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "daily-streak"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "[neg] Forged token",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('status 401', () => pm.response.to.have.status(401));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiI2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjYifQ.invalidsignature"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/daily-streak",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "daily-streak"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "[neg] Invalid day type",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('status 400', () => pm.response.to.have.status(400));",
+                      "pm.test('error code VALIDATION_ERROR', () => pm.expect(pm.response.json().error.code).to.eql('VALIDATION_ERROR'));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"day\": \"abc\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/daily-streak/claim/start",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "daily-streak",
+                    "claim",
+                    "start"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "[neg] Malformed JSON",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('status 400', () => pm.response.to.have.status(400));",
+                      "pm.test('error code INVALID_JSON', () => pm.expect(pm.response.json().error.code).to.eql('INVALID_JSON'));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"day\": 1,"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/daily-streak/claim/start",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "daily-streak",
+                    "claim",
+                    "start"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "[neg] Missing CPA session",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('status 400', () => pm.response.to.have.status(400));",
+                      "pm.test('error code CPA_VERIFICATION_REQUIRED', () => pm.expect(pm.response.json().error.code).to.eql('CPA_VERIFICATION_REQUIRED'));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/daily-streak/claim",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "daily-streak",
+                    "claim"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "4. Wallet",
+          "item": [
+            {
+              "name": "Get wallet",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('status 200', () => pm.response.to.have.status(200));",
+                      "pm.test('VEs balance from backend', () => pm.expect(pm.response.json().wallet.balances.VES).to.eql(Number(pm.collectionVariables.get('walletBefore')) + 5));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/wallet",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "wallet"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Get transactions",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('status 200', () => pm.response.to.have.status(200));",
+                      "pm.test('ledger has streak credits', () => pm.expect(pm.response.json().items.some((t) => t.source === 'DAILY_STREAK')).to.eql(true));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/wallet/transactions?page=1&limit=10",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "wallet",
+                    "transactions"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "10"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Local QA Only",
+      "description": "Requires the LOCAL development environment: backend started with NODE_ENV=development and ENABLE_DEV_TOOLS=true. These requests use /api/dev/* to reset the demo account and simulate time passing (24h unlock, missed day). In production the /api/dev routes are intentionally not mounted and return 404, so do not run this folder against the live API.",
+      "item": [
+        {
+          "name": "1. Setup",
+          "item": [
+            {
+              "name": "Login (demo user)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('status 200', () => pm.response.to.have.status(200));",
+                      "pm.collectionVariables.set('token', pm.response.json().token);"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"demo@veloop.in\",\n  \"password\": \"Demo@1234\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/auth/login",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "login"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Login (second demo user)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('status 200', () => pm.response.to.have.status(200));",
+                      "pm.collectionVariables.set('token2', pm.response.json().token);"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"demo2@veloop.in\",\n  \"password\": \"Demo@1234\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/auth/login",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "login"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Me",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('status 200', () => pm.response.to.have.status(200));",
+                      "pm.test('email', () => pm.expect(pm.response.json().user.email).to.eql('demo@veloop.in'));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/auth/me",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "me"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Reset my streak (dev tool)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('status 200', () => pm.response.to.have.status(200));",
+                      "pm.test('Day 1 available', () => { const s = pm.response.json().streak; pm.expect(s.currentDay).to.eql(1); pm.expect(s.claimable).to.eql(true); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "description": "Clears the demo user streak so the run is repeatable. The wallet ledger is never deleted.",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/dev/reset-my-streak",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "dev",
+                    "reset-my-streak"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "2. Claim Day 1 and Day 2 (time travel)",
+          "item": [
+            {
+              "name": "Get streak",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('status 200', () => pm.response.to.have.status(200));",
+                      "const d = pm.response.json();",
+                      "pm.test('Day 1 AVAILABLE / TODAY', () => { pm.expect(d.rewards[0].status).to.eql('AVAILABLE'); pm.expect(d.rewards[0].state).to.eql('TODAY'); });",
+                      "pm.collectionVariables.set('walletBefore', d.wallet.VES);"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/daily-streak",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "daily-streak"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Claim Day 1 - start (CPA session)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('status 202', () => pm.response.to.have.status(202));",
+                      "pm.collectionVariables.set('sessionId', pm.response.json().claimSession.id);"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/daily-streak/claim/start",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "daily-streak",
+                    "claim",
+                    "start"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Claim Day 1 - confirm",
+              "event": [
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "// Wait for the server-side CPA demo window (cpaDemoSeconds = 5).",
+                      "setTimeout(() => {}, 5500);"
+                    ]
+                  }
+                },
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('status 200', () => pm.response.to.have.status(200));",
+                      "pm.test('granted +5 VEs', () => pm.expect(pm.response.json().transaction.amount).to.eql(5));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"claimSessionId\": \"{{sessionId}}\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/daily-streak/claim",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "daily-streak",
+                    "claim"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "[neg] Claim locked Day 2",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('status 409', () => pm.response.to.have.status(409));",
+                      "pm.test('error code REWARD_LOCKED', () => pm.expect(pm.response.json().error.code).to.eql('REWARD_LOCKED'));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/daily-streak/claim/start",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "daily-streak",
+                    "claim",
+                    "start"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Simulate +24h (dev tool)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('status 200', () => pm.response.to.have.status(200));",
+                      "pm.test('Day 2 now claimable', () => pm.expect(pm.response.json().streak.claimable).to.eql(true));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"hours\": 24\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/dev/time-travel",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "dev",
+                    "time-travel"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Day 2 is TODAY",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('status 200', () => pm.response.to.have.status(200));",
+                      "pm.test('Day 2 state TODAY', () => pm.expect(pm.response.json().rewards[1].state).to.eql('TODAY'));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/daily-streak",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "daily-streak"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "[neg] Jump to Day 7",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('status 403', () => pm.response.to.have.status(403));",
+                      "pm.test('error code DAY_NOT_ELIGIBLE', () => pm.expect(pm.response.json().error.code).to.eql('DAY_NOT_ELIGIBLE'));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"day\": 7\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/daily-streak/claim/start",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "daily-streak",
+                    "claim",
+                    "start"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Claim Day 2 - start (with fake reward/user fields)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('status 202', () => pm.response.to.have.status(202));",
+                      "pm.collectionVariables.set('sessionId', pm.response.json().claimSession.id);"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "description": "All tampering fields are ignored (and audit-logged as TAMPERED_REQUEST); only the backend-configured reward is granted.",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"day\": 2,\n  \"reward\": 1000000,\n  \"amount\": 100000,\n  \"currency\": \"INR\",\n  \"streak\": 7,\n  \"userId\": \"anotherUser\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/daily-streak/claim/start",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "daily-streak",
+                    "claim",
+                    "start"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "[neg] Other user cannot confirm this session",
+              "event": [
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "// Wait for the server-side CPA demo window (cpaDemoSeconds = 5).",
+                      "setTimeout(() => {}, 5500);"
+                    ]
+                  }
+                },
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('status 404', () => pm.response.to.have.status(404));",
+                      "pm.test('error code CLAIM_SESSION_NOT_FOUND', () => pm.expect(pm.response.json().error.code).to.eql('CLAIM_SESSION_NOT_FOUND'));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token2}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"claimSessionId\": \"{{sessionId}}\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/daily-streak/claim",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "daily-streak",
+                    "claim"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Claim Day 2 - confirm",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('status 200', () => pm.response.to.have.status(200));",
+                      "pm.test('fake reward ignored: +10 VEs', () => { const t = pm.response.json().transaction; pm.expect(t.amount).to.eql(10); pm.expect(t.currency).to.eql('VES'); });",
+                      "pm.test('real streak = 2', () => pm.expect(pm.response.json().streak.currentStreak).to.eql(2));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"claimSessionId\": \"{{sessionId}}\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/daily-streak/claim",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "daily-streak",
+                    "claim"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Get history",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('status 200', () => pm.response.to.have.status(200));",
+                      "pm.test('latest claim is Day 2', () => pm.expect(pm.response.json().claims[0].day).to.eql(2));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/daily-streak/history?page=1&limit=10",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "daily-streak",
+                    "history"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "10"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "3. Missed day & reset",
+          "item": [
+            {
+              "name": "Simulate +49h (miss Day 3)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('status 200', () => pm.response.to.have.status(200));",
+                      "pm.test('streak reset to Day 1', () => { const s = pm.response.json().streak; pm.expect(s.status).to.eql('RESET'); pm.expect(s.currentStreak).to.eql(0); pm.expect(s.currentDay).to.eql(1); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"hours\": 49\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/dev/time-travel",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "dev",
+                    "time-travel"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Get streak after reset",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('status 200', () => pm.response.to.have.status(200));",
+                      "const d = pm.response.json();",
+                      "pm.test('reset notice shows missed Day 3', () => pm.expect(d.resetNotice.missedDay).to.eql(3));",
+                      "pm.test('Day 3 card state MISSED', () => pm.expect(d.rewards[2].state).to.eql('MISSED'));",
+                      "pm.test('Day 1 is TODAY again', () => pm.expect(d.rewards[0].state).to.eql('TODAY'));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/daily-streak",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "daily-streak"
+                  ]
+                }
+              }
+            }
+          ]
         }
       ]
     }

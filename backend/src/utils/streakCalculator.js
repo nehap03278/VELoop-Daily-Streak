@@ -53,11 +53,23 @@ function evaluate(streak, config, totalDays, now) {
 }
 
 /**
- * Decides the state of each reward card for the cycle that should be displayed.
+ * Card state (spec section 29): the backend-decided classification of each day card.
+ *   TODAY   - today's actionable streak day, claimable now
+ *   CLAIMED - already claimed in the displayed cycle
+ *   MISSED  - the day whose claim window passed, breaking the previous streak (shown until the next claim)
+ *   LOCKED  - not claimable yet
+ * `status` (CLAIMED | AVAILABLE | LOCKED) stays the claimability flag that drives the claim button (section 34),
+ * so the TODAY card is `status: AVAILABLE` + `state: TODAY`.
+ */
+const DAY_STATES = Object.freeze(['LOCKED', 'AVAILABLE', 'TODAY', 'CLAIMED', 'MISSED']);
+
+/**
+ * Decides the status/state of each reward card for the cycle that should be displayed.
  * While a completed cycle is still inside its waiting period it stays on screen (all CLAIMED);
  * once the next Day 1 unlocks, a fresh cycle is presented.
+ * `missedDay` comes from an active reset notice; that day is marked MISSED unless it is today's claimable day.
  */
-function buildDayStates({ evaluation, rewards, claimsByDay }) {
+function buildDayStates({ evaluation, rewards, claimsByDay, missedDay = null }) {
   const showCompletedCycle = evaluation.cycleComplete && !evaluation.claimable;
 
   return rewards.map((reward) => {
@@ -66,14 +78,15 @@ function buildDayStates({ evaluation, rewards, claimsByDay }) {
     const base = { day, isToday: false, isNext: false, claimedAt: null, unlocksAt: null };
 
     if (showCompletedCycle || day <= evaluation.claimedInCycle) {
-      return { ...base, status: 'CLAIMED', claimedAt: claim ? claim.claimedAt : null };
+      return { ...base, status: 'CLAIMED', state: 'CLAIMED', claimedAt: claim ? claim.claimedAt : null };
     }
     if (day === evaluation.currentDay) {
-      if (evaluation.claimable) return { ...base, status: 'AVAILABLE', isToday: true };
-      return { ...base, status: 'LOCKED', isNext: true, unlocksAt: evaluation.unlockAt };
+      if (evaluation.claimable) return { ...base, status: 'AVAILABLE', state: 'TODAY', isToday: true };
+      return { ...base, status: 'LOCKED', state: 'LOCKED', isNext: true, unlocksAt: evaluation.unlockAt };
     }
-    return { ...base, status: 'LOCKED' };
+    if (missedDay !== null && day === missedDay) return { ...base, status: 'LOCKED', state: 'MISSED' };
+    return { ...base, status: 'LOCKED', state: 'LOCKED' };
   });
 }
 
-module.exports = { evaluate, buildDayStates, MINUTE };
+module.exports = { evaluate, buildDayStates, DAY_STATES, MINUTE };

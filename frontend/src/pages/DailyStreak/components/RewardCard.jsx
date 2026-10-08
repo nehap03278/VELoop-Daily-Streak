@@ -1,17 +1,20 @@
-import { Check, CheckCircle2, ChevronRight, Lock } from 'lucide-react';
+import { Check, CheckCircle2, ChevronRight, Lock, XCircle } from 'lucide-react';
 import { rewardImage } from '../../../utils/rewardAssets';
 import { formatDuration } from '../../../utils/serverClock';
 import styles from './RewardCard.module.css';
 
+// Visual treatment follows the backend-decided `state` (TODAY | CLAIMED | MISSED | LOCKED);
+// whether the claim button is shown follows the backend `status` (AVAILABLE), per spec section 34.
 function CornerBadge({ card }) {
-  if (card.status === 'CLAIMED') {
+  if (card.state === 'CLAIMED') {
     return (
       <span className={styles.claimedMark} aria-hidden="true">
         <Check size={12} strokeWidth={3.5} />
       </span>
     );
   }
-  if (card.isToday) return <span className={`${styles.tab} ${styles.tabToday}`}>Today</span>;
+  if (card.state === 'TODAY') return <span className={`${styles.tab} ${styles.tabToday}`}>Today</span>;
+  if (card.state === 'MISSED') return <span className={`${styles.tab} ${styles.tabMissed}`}>Missed</span>;
   if (card.isNext) return <span className={`${styles.tab} ${styles.tabNext}`}>Next</span>;
   if (card.reward.badge) {
     const vip = card.reward.isUltimate;
@@ -43,6 +46,13 @@ function ActionButton({ card, onClaim, claimBusy, countdownMs }) {
       </button>
     );
   }
+  if (card.state === 'MISSED') {
+    return (
+      <span className={`${styles.action} ${styles.actionMissed}`}>
+        <XCircle size={14} /> Missed
+      </span>
+    );
+  }
   if (card.isNext && card.unlocksAt) {
     return (
       <span className={`${styles.action} ${styles.actionTimer}`} aria-label={`Unlocks in ${formatDuration(countdownMs)}`}>
@@ -57,24 +67,28 @@ function ActionButton({ card, onClaim, claimBusy, countdownMs }) {
   );
 }
 
-/** One streak day. Status, value and badge come straight from the backend card object. */
+/** One streak day. State, status, value and badge come straight from the backend card object. */
 export default function RewardCard({ card, onClaim, claimBusy, countdownMs, justClaimed }) {
   const { reward } = card;
   const classNames = [
     styles.card,
     reward.isUltimate ? styles.ultimate : '',
-    card.status === 'CLAIMED' ? styles.claimed : '',
-    card.status === 'AVAILABLE' ? styles.available : '',
+    card.state === 'CLAIMED' ? styles.claimed : '',
+    card.state === 'TODAY' ? styles.available : '',
+    card.state === 'MISSED' ? styles.missed : '',
     card.isNext ? styles.next : '',
     justClaimed ? styles.justClaimed : '',
   ].join(' ');
 
-  const valueTone = card.status === 'CLAIMED' ? styles.valueGreen : card.status === 'AVAILABLE' || reward.isUltimate ? styles.valueGold : styles.valuePurple;
-  const hasCorner = card.status === 'CLAIMED' || card.isToday || card.isNext || Boolean(reward.badge);
+  let valueTone = styles.valuePurple;
+  if (card.state === 'CLAIMED') valueTone = styles.valueGreen;
+  else if (card.state === 'MISSED') valueTone = styles.valueMissed;
+  else if (card.state === 'TODAY' || reward.isUltimate) valueTone = styles.valueGold;
+  const hasCorner = card.state !== 'LOCKED' || card.isNext || Boolean(reward.badge);
   const animated = reward.assetType === 'gift-box' || reward.assetType === 'crown';
 
   return (
-    <article className={classNames} aria-label={`Day ${card.day}: ${reward.displayValue} ${reward.subtitle}, ${card.status.toLowerCase()}`}>
+    <article className={classNames} aria-label={`Day ${card.day}: ${reward.displayValue} ${reward.subtitle}, ${card.state.toLowerCase()}`}>
       <div className={`${styles.top} ${hasCorner ? styles.topSplit : ''}`}>
         <span className={`${styles.dayPill} ${reward.isUltimate ? styles.dayPillGold : ''}`}>Day {card.day}</span>
         <CornerBadge card={card} />

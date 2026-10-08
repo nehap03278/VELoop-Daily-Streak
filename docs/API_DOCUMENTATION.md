@@ -103,13 +103,13 @@ Returns the full page state. The response is computed on the server, and a misse
   "ultimateReward": {
     "day": 7, "rewardType": "GIFT_CARD", "currency": "INR", "amount": 5, "displayValue": "₹5",
     "title": "Ultimate Reward", "subtitle": "Amazon Gift Card", "assetType": "crown", "badge": "VIP",
-    "isUltimate": true, "provider": "Amazon", "unlockDay": 7, "status": "LOCKED"
+    "isUltimate": true, "provider": "Amazon", "unlockDay": 7, "status": "LOCKED", "state": "LOCKED"
   },
   "rewards": [
-    { "day": 1, "status": "CLAIMED", "isToday": false, "isNext": false, "claimedAt": "2026-09-25T08:45:14.300Z", "unlocksAt": null,
+    { "day": 1, "status": "CLAIMED", "state": "CLAIMED", "isToday": false, "isNext": false, "claimedAt": "2026-09-25T08:45:14.300Z", "unlocksAt": null,
       "reward": { "id": "…", "day": 1, "rewardType": "VES", "currency": "VES", "amount": 5, "displayValue": "+5", "title": "Daily Reward", "subtitle": "5 VEs", "assetType": "coin", "badge": null, "isUltimate": false } },
-    { "day": 2, "status": "LOCKED", "isToday": false, "isNext": true, "claimedAt": null, "unlocksAt": "2026-09-26T08:45:14.300Z", "reward": { "…": "…" } },
-    { "day": 3, "status": "LOCKED", "isToday": false, "isNext": false, "claimedAt": null, "unlocksAt": null, "reward": { "…": "…" } }
+    { "day": 2, "status": "LOCKED", "state": "LOCKED", "isToday": false, "isNext": true, "claimedAt": null, "unlocksAt": "2026-09-26T08:45:14.300Z", "reward": { "…": "…" } },
+    { "day": 3, "status": "LOCKED", "state": "LOCKED", "isToday": false, "isNext": false, "claimedAt": null, "unlocksAt": null, "reward": { "…": "…" } }
   ],
   "resetNotice": null,
   "cpa": { "required": true, "durationSeconds": 5 },
@@ -117,15 +117,44 @@ Returns the full page state. The response is computed on the server, and a misse
 }
 ```
 
-Card `status` values:
+#### Card `status` and `state`
 
-| Status | Meaning |
+Every day card (and `ultimateReward`) carries two backend-decided fields. **The backend determines both**; the frontend only renders them.
+
+`status` is the claimability flag. It drives the claim button (spec §34):
+
+| `status` | Meaning |
 | --- | --- |
 | `CLAIMED` | Claimed in this cycle (`claimedAt`) |
-| `AVAILABLE` | The actionable day; can be claimed now (`isToday: true`) |
-| `LOCKED` | Not yet claimable. The waiting day has `isNext: true` and `unlocksAt`. |
+| `AVAILABLE` | Can be claimed now; the frontend shows *Claim Reward* |
+| `LOCKED` | Not claimable. The waiting day also has `isNext: true` and `unlocksAt`. |
 
-After a missed day, `resetNotice` has this shape (`MISSED` marks the day that broke the streak):
+`state` is the card state (spec §29) and drives how the card looks:
+
+| `state` | Meaning | `status` on the same card |
+| --- | --- | --- |
+| `CLAIMED` | Claimed in this cycle | `CLAIMED` |
+| `TODAY` | Today's actionable streak day, claimable now | `AVAILABLE` |
+| `MISSED` | The day whose claim window passed and broke the previous streak. Shown until the user claims again after the reset. | `LOCKED` |
+| `LOCKED` | Not claimable yet, including the day waiting on the countdown (`isNext: true`) | `LOCKED` |
+
+So `AVAILABLE` appears in `status` and `TODAY` appears in `state` on the same card:
+
+```json
+{ "day": 2, "status": "AVAILABLE", "state": "TODAY", "isToday": true, "isNext": false, "claimedAt": null, "unlocksAt": null, "reward": { "…": "…" } }
+```
+
+After a missed day, the missed card is explicitly `MISSED` and cannot be claimed:
+
+```json
+{ "day": 3, "status": "LOCKED", "state": "MISSED", "isToday": false, "isNext": false, "claimedAt": null, "unlocksAt": null, "reward": { "…": "…" } }
+```
+
+For example, after Day 1 and Day 2 were claimed and Day 3 was missed, the seven cards' `state` values are `TODAY, LOCKED, MISSED, LOCKED, LOCKED, LOCKED, LOCKED`. Day 1 is claimable again immediately.
+
+**Day 1 exception:** if the missed day was Day 1 (for example, the first day of a new cycle after Day 7), that day is immediately claimable again. Its card is therefore `status: "AVAILABLE"`, `state: "TODAY"`, not `MISSED`. The miss is still recorded in `resetNotice` (`missedDay: 1`) and shown in the reset banner.
+
+After a missed day, `resetNotice` has this shape (its timeline also marks the missed day `MISSED`):
 
 ```json
 "resetNotice": {

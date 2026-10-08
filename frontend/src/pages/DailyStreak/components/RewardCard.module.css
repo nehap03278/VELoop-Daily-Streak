@@ -451,3 +451,30 @@
     display: none;
   }
 }
+
+/* ----- MISSED (backend state after a streak reset) ----- */
+.missed {
+  border-color: rgba(248, 113, 113, 0.55);
+  background:
+    radial-gradient(120px 90px at 50% 35%, rgba(248, 113, 113, 0.1), transparent 70%),
+    linear-gradient(180deg, #1d0f1a 0%, #110a14 100%);
+}
+
+.missed .image {
+  filter: grayscale(0.6) brightness(0.75);
+}
+
+.tabMissed {
+  color: #fff;
+  background: linear-gradient(135deg, #ef4444, #b91c1c);
+}
+
+.valueMissed {
+  color: var(--vl-red);
+}
+
+.actionMissed {
+  color: var(--vl-red);
+  border: 1px solid rgba(248, 113, 113, 0.45);
+  background: rgba(127, 29, 29, 0.2);
+}

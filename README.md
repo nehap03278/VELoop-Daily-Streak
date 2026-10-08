@@ -41,7 +41,7 @@ Further documentation: [API](docs/API_DOCUMENTATION.md) · [Database](docs/DATAB
 | Frontend | React 18 + Vite + React Router, Bootstrap 5 grid/utilities + CSS Modules, Lucide/React Icons, supplied artwork (optimised WebP) |
 | UX states | Branded loader, themed skeleton, error screen and toast, claimable/claimed/locked/next-countdown/reset states, CPA advertisement demo, success receipt, streak calendar (history) |
 | Responsive | Dedicated mobile layout (4 + 3 cards), tablet layout (stacked hero, 4 + 3 grid), desktop layout (side-by-side hero, 7-card row); verified from 320px to 1920px |
-| Docs & tests | 69 automated Jest/Supertest tests (standalone and replica-set MongoDB), a Postman collection (60 assertions, run with newman), browser-level checks |
+| Docs & tests | 77 automated Jest/Supertest tests (standalone and replica-set MongoDB), a Postman collection (41 requests / 86 assertions, run with newman, split into *Production / Live Flow* and *Local QA Only*), browser-level checks |
 
 ### Repository layout
 
@@ -185,7 +185,15 @@ missed     = currentStreak > 0  AND serverNow >= deadline
 
 With the seeded config (1440 / 1440 minutes), the next day unlocks **24h after the previous claim** and must be claimed **within the following 24h**.
 
-Card statuses returned by the backend: `CLAIMED`, `AVAILABLE` (with `isToday: true`, shown as the *TODAY* highlight), `LOCKED` (the waiting day has `isNext: true` and `unlocksAt`), and `MISSED` (used in the reset notice timeline).
+Every day card carries two backend-decided fields; the frontend only renders them:
+
+- **`status`** (`CLAIMED` | `AVAILABLE` | `LOCKED`) is the claimability flag that drives the claim button (spec §34).
+- **`state`** (`CLAIMED` | `TODAY` | `MISSED` | `LOCKED`) is the card state from spec §29:
+  - `TODAY` is today's claimable day (`status: AVAILABLE`, `isToday: true`).
+  - `MISSED` is the day whose window passed and broke the previous streak (`status: LOCKED`), shown until the next claim.
+  - `LOCKED` includes the waiting day (`isNext: true` with `unlocksAt`).
+
+Examples and the Day 1 exception are in [docs/API_DOCUMENTATION.md](docs/API_DOCUMENTATION.md).
 
 **Cycle completion:** claiming the final day marks the cycle `COMPLETED`. The completed cycle stays on screen, with every card claimed and a countdown, until the next Day 1 unlocks. The next claim then opens cycle *n + 1*. The streak count continues across cycles (8, 9, …) while the user keeps claiming on time.
 
@@ -243,7 +251,9 @@ Idempotency: repeating `POST /claim` with the same `claimSessionId` returns the 
 
 - A missed day is detected **lazily and deterministically** from stored timestamps whenever the user's state is read (`GET /daily-streak`, `/status`, or either claim call). Closing the browser does not matter; only `serverNow >= deadline` does.
 - The reset is a compare-and-set update: `currentStreak → 0`, `lastClaimedDay → 0`, and `lastReset = { at, missedDay, previousStreak, claimedDays }`. The broken cycle is marked `BROKEN` with its `missedDay`, and a new `ACTIVE` cycle is opened. A `STREAK_RESET` audit event is written exactly once.
-- The API returns `streak.status = "RESET"` and a `resetNotice`, which includes a day timeline with `CLAIMED` / `MISSED` / `LOCKED` entries. The UI shows it as a banner until the user claims again. Day 1 is immediately `AVAILABLE`.
+- The API returns `streak.status = "RESET"` and a `resetNotice`, which includes a day timeline with `CLAIMED` / `MISSED` / `LOCKED` entries. The UI shows it as a banner until the user claims again.
+- The day cards also show the miss directly: the missed day's card has `state: "MISSED"` (`status: "LOCKED"`, not claimable), rendered as a red *Missed* card. Day 1 is immediately claimable (`status: "AVAILABLE"`, `state: "TODAY"`).
+- If the missed day was Day 1 itself, that card is `TODAY` rather than `MISSED`, because it is claimable again straight away. The miss still appears in `resetNotice` and the banner.
 
 ---
 
@@ -314,13 +324,20 @@ Request and response examples and error codes are in [docs/API_DOCUMENTATION.md]
 
 ```bash
 cd backend
-npm test                 # 69 tests against a local MongoDB (standalone → compensation path)
+npm test                 # 77 tests against a local MongoDB (standalone → compensation path)
 npm run test:replset     # same suite against a replica set (transaction path); needs mongod --replSet on :27018
 # or: TEST_MONGO_URI="mongodb+srv://…" npm test
 
 cd postman
-npx newman run VELoop_Daily_Streak.postman_collection.json   # 29 requests / 60 assertions (needs ENABLE_DEV_TOOLS=true)
+npx newman run VELoop_Daily_Streak.postman_collection.json                                  # full collection, local: 41 requests / 86 assertions
+npx newman run VELoop_Daily_Streak.postman_collection.json --folder "Production / Live Flow" # 24 requests / 53 assertions
+npx newman run VELoop_Daily_Streak.postman_collection.json --folder "Production / Live Flow" --env-var baseUrl=https://<api-domain>/api
 ```
+
+The Postman collection has two folders:
+
+- **Production / Live Flow** (24 requests / 53 assertions) uses public endpoints only. It registers a fresh user each run, so it is repeatable against the deployed API.
+- **Local QA Only** (17 requests) uses the `/api/dev/*` time-travel endpoints to demonstrate the 24h unlock, the missed-day reset and the `MISSED` card. `/api/dev/*` exists only on a local backend with `NODE_ENV=development` and `ENABLE_DEV_TOOLS=true`. It is intentionally unavailable in production, where those requests return 404.
 
 The tests use a controllable **server** clock (`utils/clock.js`, test-only offset) to simulate the 24h lock, the claim window and missed days. [docs/TESTING.md](docs/TESTING.md) lists every scenario: normal claim, already claimed, locked, timer, missed day, reset, duplicate, concurrent, fake reward, fake day, fake streak, fake user, device time, unauthorized, refresh, multiple tabs and full cycle. It also describes how each was tested manually and in the browser.
 
@@ -341,7 +358,7 @@ Suggested order:
 3. **Backend:** deploy with `render.yaml`, fill in `MONGO_URI` and `CLIENT_URL`, then check `/api/health`. The log must say `multi-document transactions: enabled`; on a standalone database the API refuses to start.
 4. **Frontend:** deploy `frontend` on Vercel with `VITE_API_URL`, then set the backend's `CLIENT_URL` to the exact Vercel URL and redeploy the backend.
 
-Dev tools (`/api/dev/*`) are never available in production (`NODE_ENV=production`). Demonstrate the 24h unlock and missed-day reset locally, with the automated tests, or with the Postman collection against a local server.
+Dev tools (`/api/dev/*`) are never available in production (`NODE_ENV=production`); they are Local QA Only. Demonstrate the 24h unlock and missed-day reset locally, with the automated tests, or with the *Local QA Only* Postman folder against a local server. Run the *Production / Live Flow* folder against the deployed API.
 
 ---
 
@@ -353,7 +370,7 @@ The specification left these points open. Each choice is documented here.
 | --- | --- |
 | Streak day timing | Rolling window from the last claim (unlock after `claimIntervalMinutes`, miss after a further `claimWindowMinutes`) rather than calendar-midnight days. This matches the spec's "24-hour backend-controlled timer" and avoids time-zone ambiguity. |
 | Streak count for a new user | Shown as **0** ("Start your streak") until Day 1 is claimed; after the claim it is 1, as in spec §8. A reset also returns to 0 (spec §50). |
-| `TODAY` state | Represented as `status: AVAILABLE` + `isToday: true`, because a day can be both "today" and claimable. The waiting day is `LOCKED` + `isNext: true` + `unlocksAt`. `MISSED` appears in the reset notice timeline. |
+| Card states (§29) | Two backend fields per card. `status` (`CLAIMED`/`AVAILABLE`/`LOCKED`) is claimability. `state` (`CLAIMED`/`TODAY`/`MISSED`/`LOCKED`) is the card state, so today's claimable day is `status: AVAILABLE` + `state: TODAY`. The missed day is `state: MISSED` on its card (and in the reset notice timeline). The waiting day is `LOCKED` + `isNext: true` + `unlocksAt`. |
 | CPA demo | Two-phase claim with a server-side session and a minimum verification time (`cpaDemoSeconds`, default 5s). The real CPA integration can later replace the demo by marking the session verified. `requireCpaVerification: false` enables a direct single-call claim. |
 | After Day 7 | The cycle completes and a new cycle starts at Day 1 once the interval passes. The streak count keeps growing. Missing the next Day 1 resets the count. |
 | Gift-card rewards | Credited to `wallet.balances.INR` as gift-card value with a ledger entry. Issuing actual Amazon codes is out of scope. |
