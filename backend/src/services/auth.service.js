@@ -47,8 +47,9 @@ async function login({ email, password }, ctx = {}) {
   if (user.status !== 'ACTIVE') throw new AppError(403, 'ACCOUNT_SUSPENDED', 'This account has been suspended.');
 
   user.lastLoginAt = new Date();
-  await user.save();
-  await audit('USER_LOGIN', { userId: user._id, req: ctx.req });
+  // audit() never rejects (it swallows its own errors), so this is safe to run alongside the
+  // save rather than after it - saving one round trip on every login.
+  await Promise.all([user.save(), audit('USER_LOGIN', { userId: user._id, req: ctx.req })]);
   return { user: user.toPublicJSON(), token: signToken(user) };
 }
 

@@ -100,11 +100,17 @@ async function resetStreak(streak, evaluation, totalDays, now) {
  * Everything is evaluated against a single trusted server timestamp.
  */
 async function loadState(userId, { req } = {}) {
-  const [config, rewards] = await Promise.all([getStreakConfig(), rewardService.getActiveRewards()]);
+  // The returning-user case (by far the common one) needs no write here, so the existence
+  // check runs alongside config/rewards instead of after them, saving one round trip per call.
+  const [config, rewards, existingStreak] = await Promise.all([
+    getStreakConfig(),
+    rewardService.getActiveRewards(),
+    UserStreak.findOne({ userId }),
+  ]);
   const totalDays = rewards.length;
   const now = clock.now();
 
-  let streak = await ensureStreak(userId, totalDays, now);
+  let streak = existingStreak || (await ensureStreak(userId, totalDays, now));
   let resetInfo = null;
 
   for (let attempt = 0; attempt < MAX_STATE_ATTEMPTS; attempt += 1) {
