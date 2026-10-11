@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronRight, Gem, Gift, LogOut, Clock, RotateCcw } from 'lucide-react';
+import { ChevronRight, Gem, Gift, LogOut, Clock, RotateCcw, User } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { getStatus } from '../../services/streakApi';
 import { getWallet, getTransactions, devTimeTravel, devResetMyStreak } from '../../services/walletApi';
@@ -56,9 +56,14 @@ export default function HomePage() {
               </p>
             </div>
           </div>
-          <button type="button" className={styles.logout} onClick={logout}>
-            <LogOut size={16} /> <span className="d-none d-sm-inline">Log out</span>
-          </button>
+          <div className={styles.headerActions}>
+            <Link to="/profile" className={styles.profileLink} aria-label="View profile">
+              <User size={16} /> <span className="d-none d-sm-inline">Profile</span>
+            </Link>
+            <button type="button" className={styles.logout} onClick={logout}>
+              <LogOut size={16} /> <span className="d-none d-sm-inline">Log out</span>
+            </button>
+          </div>
         </header>
 
         {state.status === 'error' && (

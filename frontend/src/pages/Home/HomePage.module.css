@@ -40,6 +40,13 @@
   color: transparent;
 }
 
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.profileLink,
 .logout {
   display: inline-flex;
   align-items: center;
@@ -51,8 +58,10 @@
   color: var(--vl-muted);
   font-size: 0.85rem;
   font-weight: 600;
+  text-decoration: none;
 }
 
+.profileLink:hover,
 .logout:hover {
   color: var(--vl-text);
 }

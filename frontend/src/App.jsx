@@ -3,6 +3,7 @@ import ProtectedRoute from './components/common/ProtectedRoute';
 import LoginPage from './pages/Login/LoginPage';
 import HomePage from './pages/Home/HomePage';
 import DailyStreakPage from './pages/DailyStreak/DailyStreakPage';
+import ProfilePage from './pages/Profile/ProfilePage';
 
 export default function App() {
   return (
@@ -21,6 +22,14 @@ export default function App() {
         element={
           <ProtectedRoute>
             <DailyStreakPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/profile"
+        element={
+          <ProtectedRoute>
+            <ProfilePage />
           </ProtectedRoute>
         }
       />
