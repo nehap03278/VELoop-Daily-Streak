@@ -3,7 +3,7 @@ process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret-that-is-long-eno
 
 const mongoose = require('mongoose');
 const request = require('supertest');
-require('../src/models');
+const { StreakConfig } = require('../src/models');
 const { connectDB, disconnectDB } = require('../src/config/db');
 const { createApp } = require('../src/app');
 const clock = require('../src/utils/clock');
@@ -23,6 +23,8 @@ async function setupDatabase(name) {
   await mongoose.connection.db.dropDatabase();
   await Promise.all(Object.values(mongoose.models).map((model) => model.syncIndexes()));
   await seedConfiguration();
+  // The suites exercise the two-phase CPA flow; the direct claim path is covered explicitly in claim.test.js.
+  await StreakConfig.updateOne({ key: 'default' }, { $set: { requireCpaVerification: true } });
 }
 
 async function teardownDatabase() {

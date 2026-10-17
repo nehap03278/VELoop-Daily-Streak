@@ -8,7 +8,8 @@ const streakConfig = {
   claimWindowMinutes: 24 * 60, // then the user has 24h to claim before the streak is missed
   cpaDemoSeconds: 5,
   claimSessionTtlMinutes: 10,
-  requireCpaVerification: true,
+  // Off: a claim is a single backend call (no ad wait). Set to true to bring back the CPA/ad step.
+  requireCpaVerification: false,
   resetRule: 'RESET_TO_DAY_1',
   cycleCompletionRule: 'START_NEW_CYCLE',
   active: true,

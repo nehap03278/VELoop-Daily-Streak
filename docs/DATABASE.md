@@ -53,7 +53,7 @@ Balances are only changed with atomic `$inc`.
 | claimWindowMinutes | 1440 | Time after unlock before the day counts as missed |
 | cpaDemoSeconds | 5 | Minimum server-enforced CPA/ad verification time |
 | claimSessionTtlMinutes | 10 | Claim session lifetime |
-| requireCpaVerification | true | `false` enables single-call claims |
+| requireCpaVerification | false | `false` enables single-call claims |
 | resetRule | `RESET_TO_DAY_1` | Rule applied on a missed day |
 | cycleCompletionRule | `START_NEW_CYCLE` | Rule applied after the last day |
 | active | true | |
