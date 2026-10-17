@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowDownLeft, ChevronRight, Clock, Coins, Flame, Gem, Gift, LogOut, Receipt, RotateCcw, Sparkles, Trophy, User } from 'lucide-react';
+import { ArrowDownLeft, ChevronRight, Clock, Coins, Flame, Gem, Gift, LogOut, Nfc, Receipt, RotateCcw, Sparkles, Trophy, User } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { getStatus } from '../../services/streakApi';
 import { getWallet, getTransactions, devTimeTravel, devResetMyStreak } from '../../services/walletApi';
@@ -158,7 +158,15 @@ export default function HomePage() {
             </div>
             <div className={styles.walletFoot}>
               <span>{user?.name}</span>
-              <span className={styles.walletChip} aria-hidden="true" />
+              <span className={styles.chipGroup} aria-hidden="true">
+                <Nfc size={22} className={styles.contactless} />
+                <span className={styles.walletChip}>
+                  <i />
+                  <i />
+                  <i />
+                  <i />
+                </span>
+              </span>
             </div>
           </section>
 
