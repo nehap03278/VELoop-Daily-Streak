@@ -6,7 +6,9 @@ const AppError = require('../utils/AppError');
 const streakService = require('./streak.service');
 const { audit } = require('./audit.service');
 
-const BCRYPT_ROUNDS = 12;
+// Cost 10 is the recommended minimum and keeps a password check around 85 ms with bcryptjs
+// (cost 12 took ~330 ms, most of the login time). Older cost-12 hashes are upgraded on login.
+const BCRYPT_ROUNDS = 10;
 const JWT_ALGORITHM = 'HS256';
 
 function signToken(user) {
@@ -47,10 +49,13 @@ async function login({ email, password }, ctx = {}) {
   if (user.status !== 'ACTIVE') throw new AppError(403, 'ACCOUNT_SUSPENDED', 'This account has been suspended.');
 
   user.lastLoginAt = new Date();
+  if (bcrypt.getRounds(user.passwordHash) !== BCRYPT_ROUNDS) {
+    user.passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
+  }
   // audit() never rejects (it swallows its own errors), so this is safe to run alongside the
   // save rather than after it - saving one round trip on every login.
   await Promise.all([user.save(), audit('USER_LOGIN', { userId: user._id, req: ctx.req })]);
   return { user: user.toPublicJSON(), token: signToken(user) };
 }
 
-module.exports = { register, login, signToken, verifyToken };
+module.exports = { register, login, signToken, verifyToken, BCRYPT_ROUNDS };

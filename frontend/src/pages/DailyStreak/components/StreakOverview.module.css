@@ -1,0 +1,189 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 18px 16px 16px;
+  border-radius: var(--ds-radius);
+  border: 1px solid var(--ds-border);
+  background:
+    radial-gradient(420px 180px at 0% 0%, rgba(139, 92, 246, 0.16), transparent 70%),
+    var(--ds-surface);
+}
+
+.top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.flame {
+  flex-shrink: 0;
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  color: #fb923c;
+  background: rgba(251, 146, 60, 0.12);
+  border: 1px solid rgba(251, 146, 60, 0.25);
+}
+
+.headline {
+  flex: 1;
+  min-width: 0;
+}
+
+.count {
+  margin: 0;
+  font-family: var(--vl-font-display);
+  font-size: 1.6rem;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.count span {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--vl-muted);
+  letter-spacing: 0;
+}
+
+.hint {
+  margin: 4px 0 0;
+  font-size: 0.82rem;
+  color: var(--vl-muted);
+  line-height: 1.35;
+}
+
+.calendar {
+  flex-shrink: 0;
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 10px;
+  border-radius: 10px;
+  border: 1px solid var(--ds-border);
+  background: var(--ds-surface-2);
+  color: var(--vl-purple-3);
+  font-size: 0.8rem;
+  font-weight: 600;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.calendar:hover {
+  border-color: var(--ds-border-strong);
+  background: rgba(139, 92, 246, 0.14);
+}
+
+.calendarChevron {
+  display: none;
+}
+
+/* ----- progress ----- */
+.progress {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.progressHead {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.78rem;
+  color: var(--vl-muted);
+}
+
+.progressCount {
+  color: var(--vl-text);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.segments {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 5px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.segment {
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.segDone {
+  background: linear-gradient(90deg, #8b5cf6, #a78bfa);
+}
+
+.segToday {
+  background: var(--vl-gold);
+  animation: pulse 1.8s ease-in-out infinite;
+}
+
+.segMissed {
+  background: rgba(248, 113, 113, 0.7);
+}
+
+@media (max-width: 359.98px) {
+  .calendarLabel {
+    display: none;
+  }
+
+  .count {
+    font-size: 1.35rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .card {
+    gap: 22px;
+    padding: 24px;
+  }
+
+  .flame {
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+  }
+
+  .count {
+    font-size: 2rem;
+  }
+
+  .count span {
+    font-size: 1.1rem;
+  }
+
+  .hint {
+    font-size: 0.92rem;
+  }
+
+  .calendar {
+    align-self: center;
+    height: 38px;
+    padding: 0 12px;
+    font-size: 0.86rem;
+  }
+
+  .calendarChevron {
+    display: block;
+  }
+
+  .segment {
+    height: 10px;
+  }
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.45;
+  }
+}

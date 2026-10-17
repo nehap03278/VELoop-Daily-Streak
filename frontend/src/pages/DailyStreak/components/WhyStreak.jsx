@@ -2,6 +2,7 @@ import calendar from '../../../assets/rewards/calendar.webp';
 import biggerStreak from '../../../assets/rewards/bigger-streak.webp';
 import exclusiveGift from '../../../assets/rewards/exclusive-gift.webp';
 import shield from '../../../assets/rewards/shield.webp';
+import page from '../DailyStreak.module.css';
 import styles from './WhyStreak.module.css';
 
 // Informational marketing copy (not business data).
@@ -14,10 +15,12 @@ const BENEFITS = [
 
 export default function WhyStreak() {
   return (
-    <section className={styles.section} aria-labelledby="why-streak-title">
-      <h2 id="why-streak-title" className={styles.heading}>
-        <span className={styles.spark} aria-hidden="true" /> Why Maintain Your Streak? <span className={styles.spark} aria-hidden="true" />
-      </h2>
+    <section aria-labelledby="why-streak-title">
+      <div className={page.sectionHead}>
+        <h2 id="why-streak-title" className={page.sectionTitle}>
+          Why keep your streak?
+        </h2>
+      </div>
       <ul className={styles.list}>
         {BENEFITS.map((benefit) => (
           <li key={benefit.title} className={styles.item}>

@@ -1,184 +1,95 @@
 .header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 12px;
-  padding: 16px 0 14px;
-}
-
-.left {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-width: 0;
+  padding: 14px 0 2px;
 }
 
 .back {
   flex-shrink: 0;
-  width: 42px;
-  height: 42px;
+  width: 40px;
+  height: 40px;
   display: grid;
   place-items: center;
-  border-radius: 50%;
-  border: 1px solid var(--vl-border);
-  background: rgba(29, 18, 55, 0.7);
+  border-radius: 12px;
+  border: 1px solid var(--ds-border);
+  background: var(--ds-surface);
   color: var(--vl-text);
-  transition: background 0.2s, border-color 0.2s, transform 0.2s;
+  transition: background 0.2s, border-color 0.2s, transform 0.15s;
 }
 
 .back:hover {
-  background: rgba(76, 29, 149, 0.45);
-  border-color: var(--vl-border-strong);
+  background: var(--ds-surface-2);
+  border-color: var(--ds-border-strong);
 }
 
 .back:active {
-  transform: scale(0.94);
+  transform: scale(0.95);
 }
 
 .titles {
+  flex: 1;
   min-width: 0;
 }
 
 .title {
-  display: flex;
-  align-items: center;
-  gap: 6px;
   margin: 0;
-  font-size: 1.3rem;
+  font-size: 1.25rem;
   font-weight: 700;
+  letter-spacing: -0.02em;
   white-space: nowrap;
 }
 
-.titleFlame {
-  width: 22px;
-  height: auto;
-}
-
 .subtitle {
-  margin: 4px 0 0;
+  margin: 2px 0 0;
   color: var(--vl-muted);
-  font-size: 0.92rem;
-}
-
-.right {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-shrink: 0;
+  font-size: 0.9rem;
 }
 
 .gems {
+  flex-shrink: 0;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 14px 6px 6px;
+  gap: 6px;
+  height: 36px;
+  padding: 0 12px;
   border-radius: 999px;
-  border: 1px solid var(--vl-border);
-  background: rgba(29, 18, 55, 0.75);
+  border: 1px solid var(--ds-border);
+  background: var(--ds-surface);
 }
 
 .gemIcon {
-  width: 28px;
-  height: 28px;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  color: #ede9fe;
-  background: radial-gradient(circle at 35% 30%, #c4b5fd, #7c3aed 60%, #4c1d95);
-  box-shadow: 0 0 12px rgba(139, 92, 246, 0.5);
+  color: var(--vl-purple-2);
 }
 
 .gemValue {
   font-weight: 700;
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-variant-numeric: tabular-nums;
 }
 
-.calendar {
-  align-items: center;
-  gap: 8px;
-  padding: 9px 14px;
-  border-radius: 12px;
-  border: 1px solid var(--vl-border);
-  background: rgba(29, 18, 55, 0.55);
-  color: var(--vl-purple-3);
-  font-size: 0.85rem;
-  font-weight: 600;
-  transition: border-color 0.2s, background 0.2s;
-}
-
-.calendar:hover {
-  border-color: var(--vl-border-strong);
-  background: rgba(76, 29, 149, 0.35);
-}
-
-.badge {
-  align-items: center;
-  gap: 10px;
-  padding: 8px 18px 8px 10px;
-  border-radius: 16px;
-  border: 1px solid rgba(167, 139, 250, 0.35);
-  background: linear-gradient(135deg, rgba(91, 33, 182, 0.55), rgba(40, 18, 80, 0.8));
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
-}
-
-.badgeFlame {
-  width: 36px;
-  filter: drop-shadow(0 0 10px rgba(251, 146, 60, 0.45));
-  animation: flicker 2.4s ease-in-out infinite;
-}
-
-.badge strong {
-  display: block;
-  font-family: var(--vl-font-display);
-  font-size: 1rem;
-  line-height: 1.2;
-  color: var(--vl-gold);
-}
-
-.badge span {
-  font-size: 0.78rem;
+.gemUnit {
+  font-size: 0.75rem;
   color: var(--vl-muted);
-}
-
-@media (max-width: 359.98px) {
-  .title {
-    font-size: 1.08rem;
-  }
-
-  .back {
-    width: 36px;
-    height: 36px;
-  }
-
-  .gems {
-    padding-right: 10px;
-  }
 }
 
 @media (min-width: 768px) {
   .header {
-    padding: 26px 0 22px;
+    padding: 28px 0 6px;
+    gap: 16px;
+  }
+
+  .back {
+    width: 44px;
+    height: 44px;
   }
 
   .title {
-    font-size: 1.9rem;
-    font-weight: 800;
+    font-size: 1.75rem;
   }
 
-  .titleFlame {
-    width: 28px;
-  }
-}
-
-@media (min-width: 1200px) {
-  .title {
-    font-size: 2.2rem;
-  }
-}
-
-@keyframes flicker {
-  50% {
-    transform: translateY(-2px) scale(1.05);
+  .gems {
+    height: 40px;
+    padding: 0 16px;
   }
 }

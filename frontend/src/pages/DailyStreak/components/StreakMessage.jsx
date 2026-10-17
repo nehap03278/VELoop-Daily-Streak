@@ -1,41 +1,53 @@
+import { Clock, Gift, Trophy } from 'lucide-react';
 import { formatDuration } from '../../../utils/serverClock';
 import styles from './StreakMessage.module.css';
 
 /** The "Come back tomorrow" strip; copy is chosen from backend status, times from backend timestamps. */
 export default function StreakMessage({ streak, nextReward, countdownMs, expiryMs }) {
-  let content;
+  let Icon = Clock;
+  let tone = '';
+  let title;
+  let detail;
+
   if (streak.claimable) {
-    content =
+    Icon = Gift;
+    tone = styles.ready;
+    title = `Day ${streak.currentDay} reward is ready`;
+    detail =
       streak.currentStreak > 0 && streak.streakExpiresAt ? (
         <>
-          Day {streak.currentDay} is ready! Claim within <b className={styles.time}>{formatDuration(expiryMs)}</b> to keep your streak.
+          Claim within <b className={styles.time}>{formatDuration(expiryMs)}</b> to keep your streak.
         </>
       ) : (
-        <>Your Day {streak.currentDay} reward is ready - claim it now!</>
+        'Claim it now to start your streak.'
       );
   } else if (streak.cycleCompleted) {
-    content = (
+    Icon = Trophy;
+    title = 'Cycle complete!';
+    detail = (
       <>
-        Cycle complete! Next cycle unlocks in <b className={styles.time}>{formatDuration(countdownMs)}</b>
+        Next cycle unlocks in <b className={styles.time}>{formatDuration(countdownMs)}</b>
       </>
     );
   } else {
-    content = (
+    title = 'Come back tomorrow';
+    detail = (
       <>
-        Come back tomorrow for more rewards!{' '}
-        <span className={styles.sub}>
-          {nextReward ? `${nextReward.displayValue} ${nextReward.rewardType === 'VES' ? 'VEs' : 'gift card'}` : 'Next reward'} in{' '}
-          <b className={styles.time}>{formatDuration(countdownMs)}</b>
-        </span>
+        {nextReward ? `${nextReward.displayValue} ${nextReward.rewardType === 'VES' ? 'VEs' : 'gift card'}` : 'Next reward'} unlocks in{' '}
+        <b className={styles.time}>{formatDuration(countdownMs)}</b>
       </>
     );
   }
 
   return (
-    <p className={styles.message} role="status">
-      <span className={styles.spark} aria-hidden="true" />
-      <span className={styles.text}>{content}</span>
-      <span className={styles.spark} aria-hidden="true" />
-    </p>
+    <div className={`${styles.message} ${tone}`} role="status">
+      <span className={styles.icon} aria-hidden="true">
+        <Icon size={18} />
+      </span>
+      <p className={styles.text}>
+        <strong>{title}</strong>
+        <span>{detail}</span>
+      </p>
+    </div>
   );
 }

@@ -2,6 +2,7 @@
 const bcrypt = require('bcryptjs');
 const { StreakConfig, StreakReward, User, Wallet, WalletTransaction } = require('../src/models');
 const streakService = require('../src/services/streak.service');
+const { BCRYPT_ROUNDS } = require('../src/services/auth.service');
 const ids = require('../src/utils/ids');
 const { streakConfig, streakRewards, demoUsers } = require('./data');
 
@@ -22,7 +23,7 @@ async function seedDemoUsers() {
   const created = [];
   for (const demo of demoUsers) {
     if (await User.exists({ email: demo.email })) continue;
-    const user = await User.create({ name: demo.name, email: demo.email, passwordHash: await bcrypt.hash(demo.password, 12) });
+    const user = await User.create({ name: demo.name, email: demo.email, passwordHash: await bcrypt.hash(demo.password, BCRYPT_ROUNDS) });
     await streakService.initializeUser(user._id);
     if (demo.welcomeBonus) {
       const wallet = await Wallet.findOneAndUpdate({ userId: user._id }, { $inc: { 'balances.VES': demo.welcomeBonus } }, { new: true });

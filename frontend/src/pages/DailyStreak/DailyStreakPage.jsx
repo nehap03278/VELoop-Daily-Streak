@@ -8,9 +8,7 @@ import StreakLoader from './components/StreakLoader';
 import StreakSkeleton from './components/StreakSkeleton';
 import ErrorState from './components/ErrorState';
 import StreakHeader from './components/StreakHeader';
-import MobileHero from './components/MobileHero';
-import CheckInHero from './components/CheckInHero';
-import MobileStreakPanel from './components/MobileStreakPanel';
+import StreakOverview from './components/StreakOverview';
 import UltimateReward from './components/UltimateReward';
 import ResetBanner from './components/ResetBanner';
 import StreakMessage from './components/StreakMessage';
@@ -69,21 +67,14 @@ export default function DailyStreakPage() {
   return (
     <div className={styles.page}>
       <div className={`container-xl ${styles.container}`}>
-        <StreakHeader streak={data.streak} wallet={data.wallet} onBack={handleBack} onOpenCalendar={() => setHistoryOpen(true)} />
+        <StreakHeader wallet={data.wallet} onBack={handleBack} />
 
         {data.resetNotice && <ResetBanner notice={data.resetNotice} />}
 
-        <MobileHero />
-        <MobileStreakPanel
-          streak={data.streak}
-          stats={data.stats}
-          ultimateReward={data.ultimateReward}
-          onOpenCalendar={() => setHistoryOpen(true)}
-        />
-
-        <div className={`${styles.heroGrid} d-none d-md-grid`}>
-          <CheckInHero stats={data.stats} />
+        <div className={styles.heroGrid}>
+          <StreakOverview streak={data.streak} stats={data.stats} rewards={data.rewards} onOpenCalendar={() => setHistoryOpen(true)} />
           <UltimateReward reward={data.ultimateReward} variant="feature" />
+          <UltimateReward reward={data.ultimateReward} variant="compact" />
         </div>
 
         <StreakMessage streak={data.streak} nextReward={data.stats.nextReward} countdownMs={countdownMs} expiryMs={expiryMs} />

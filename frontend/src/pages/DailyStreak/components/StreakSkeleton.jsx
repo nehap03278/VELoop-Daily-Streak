@@ -23,9 +23,6 @@ export default function StreakSkeleton() {
           </div>
         </div>
 
-        {/* Mobile hero banner */}
-        <Block className={`d-md-none ${styles.mobileHero}`} />
-
         {/* Hero + ultimate reward */}
         <div className={`${page.heroGrid} d-block d-md-grid`}>
           <div className={`${styles.panel} ${styles.heroPanel}`}>

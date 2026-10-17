@@ -1,5 +1,8 @@
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
 const { request, createApp, setupDatabase, teardownDatabase, createUser, auth } = require('./helpers');
+const { User } = require('../src/models');
+const { BCRYPT_ROUNDS } = require('../src/services/auth.service');
 
 let app;
 beforeAll(async () => {
@@ -65,5 +68,17 @@ describe('Authentication', () => {
     const { token, user } = await createUser(app);
     const res = await request(app).get('/api/auth/me').set(auth(token)).expect(200);
     expect(res.body.user.id).toBe(user.id);
+  });
+
+  test('a password hashed at an older cost still logs in and is upgraded to the current cost', async () => {
+    const { credentials, user } = await createUser(app);
+    await User.updateOne({ _id: user.id }, { $set: { passwordHash: await bcrypt.hash(credentials.password, 12) } });
+
+    await request(app).post('/api/auth/login').send({ email: credentials.email, password: credentials.password }).expect(200);
+
+    const stored = await User.findById(user.id).select('+passwordHash');
+    expect(bcrypt.getRounds(stored.passwordHash)).toBe(BCRYPT_ROUNDS);
+    expect(await bcrypt.compare(credentials.password, stored.passwordHash)).toBe(true);
+    await request(app).post('/api/auth/login').send({ email: credentials.email, password: credentials.password }).expect(200);
   });
 });

@@ -10,7 +10,7 @@ function CornerBadge({ card }) {
   if (card.state === 'CLAIMED') {
     return (
       <span className={`${styles.badge} ${styles.badgeDone}`} aria-hidden="true">
-        <Check size={12} strokeWidth={3.5} />
+        <Check size={12} strokeWidth={3} />
       </span>
     );
   }
@@ -28,7 +28,7 @@ function ActionButton({ card, onClaim, claimBusy, countdownMs }) {
   if (card.status === 'CLAIMED') {
     return (
       <span className={`${styles.action} ${styles.actionClaimed}`}>
-        <CheckCircle2 size={15} /> Claimed
+        <CheckCircle2 size={14} /> Claimed
       </span>
     );
   }
@@ -98,7 +98,7 @@ export default function RewardCard({ card, onClaim, claimBusy, countdownMs, just
         <img src={rewardImage(reward.assetType)} alt="" className={`${styles.image} ${animated ? styles.animated : ''}`} loading="lazy" />
       </div>
       <div className={styles.info}>
-        <p className={styles.title}>{reward.title}</p>
+        {reward.isUltimate && <p className={styles.title}>{reward.title}</p>}
         <p className={`${styles.value} ${valueTone}`}>{reward.displayValue}</p>
         <p className={styles.subtitle} title={reward.subtitle}>
           {reward.subtitle}

@@ -1,44 +1,28 @@
-import { CalendarRange, CheckSquare, Star } from 'lucide-react';
 import styles from './StreakStats.module.css';
 
 /** Total Rewards / Checked In / Next Reward - all three values are provided by the backend. */
 export default function StreakStats({ stats }) {
   const next = stats.nextReward;
   return (
-    <div className={styles.stats}>
+    <dl className={styles.stats}>
       <div className={styles.stat}>
-        <span className={`${styles.icon} ${styles.purple}`}>
-          <CalendarRange size={18} />
-        </span>
-        <div className={styles.body}>
-          <span className={styles.label}>Total Rewards</span>
-          <strong className={styles.value}>{stats.totalRewards}</strong>
-        </div>
+        <dt className={styles.label}>Total rewards</dt>
+        <dd className={styles.value}>{stats.totalRewards}</dd>
       </div>
       <div className={styles.stat}>
-        <span className={`${styles.icon} ${styles.green}`}>
-          <CheckSquare size={18} />
-        </span>
-        <div className={styles.body}>
-          <span className={styles.label}>Checked In</span>
-          <strong className={styles.value}>{stats.checkedIn}</strong>
-        </div>
+        <dt className={styles.label}>Checked in</dt>
+        <dd className={styles.value}>{stats.checkedIn}</dd>
       </div>
       <div className={styles.stat}>
-        <span className={`${styles.icon} ${styles.gold}`}>
-          <Star size={17} fill="currentColor" />
-        </span>
-        <div className={styles.body}>
-          <span className={styles.label}>Next Reward</span>
-          {next ? (
-            <strong className={`${styles.value} ${styles.goldText}`}>
-              {next.displayValue} <small>{next.rewardType === 'VES' ? 'VEs' : 'Gift Card'}</small>
-            </strong>
-          ) : (
-            <strong className={styles.value}>-</strong>
-          )}
-        </div>
+        <dt className={styles.label}>Next reward</dt>
+        {next ? (
+          <dd className={`${styles.value} ${styles.goldText}`}>
+            {next.displayValue} <small>{next.rewardType === 'VES' ? 'VEs' : 'Gift Card'}</small>
+          </dd>
+        ) : (
+          <dd className={styles.value}>-</dd>
+        )}
       </div>
-    </div>
+    </dl>
   );
 }

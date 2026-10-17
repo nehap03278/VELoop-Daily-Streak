@@ -6,7 +6,7 @@ export default function TrustFooter() {
   return (
     <footer className={styles.footer}>
       <a className={styles.strip} href="https://veloopRewards.in" target="_blank" rel="noopener noreferrer">
-        <Logo size={34} className={styles.logo} />
+        <Logo size={30} className={styles.logo} />
         <span className={styles.copy}>
           <span>
             Official rewards only on <b>VeloopRewards.in</b>

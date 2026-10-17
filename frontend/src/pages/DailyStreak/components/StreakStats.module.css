@@ -1,56 +1,27 @@
 .stats {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
+  margin: 0;
+  padding: 12px 0 0;
+  border-top: 1px solid var(--ds-border);
 }
 
 .stat {
-  display: flex;
-  align-items: center;
-  gap: 8px;
   min-width: 0;
-  padding: 10px 8px;
-  border-radius: 14px;
-  border: 1px solid var(--vl-border);
-  background: linear-gradient(180deg, rgba(36, 22, 68, 0.75), rgba(20, 12, 38, 0.75));
+  padding: 0 12px;
 }
 
-.icon {
-  flex-shrink: 0;
-  width: 34px;
-  height: 34px;
-  display: grid;
-  place-items: center;
-  border-radius: 10px;
+.stat:first-child {
+  padding-left: 0;
 }
 
-.purple {
-  color: var(--vl-purple-2);
-  background: rgba(139, 92, 246, 0.16);
-  border: 1px solid rgba(139, 92, 246, 0.35);
-}
-
-.green {
-  color: var(--vl-green-2);
-  background: rgba(34, 197, 94, 0.12);
-  border: 1px solid rgba(34, 197, 94, 0.35);
-}
-
-.gold {
-  color: #3b2300;
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #fde68a, #f59e0b 70%);
-  box-shadow: 0 0 12px rgba(251, 191, 36, 0.35);
-}
-
-.body {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
+.stat + .stat {
+  border-left: 1px solid var(--ds-border);
 }
 
 .label {
-  font-size: 0.7rem;
+  font-size: 0.72rem;
+  font-weight: 500;
   color: var(--vl-muted);
   white-space: nowrap;
   overflow: hidden;
@@ -58,55 +29,38 @@
 }
 
 .value {
+  margin: 2px 0 0;
   font-family: var(--vl-font-display);
-  font-size: 1.05rem;
+  font-size: 1.15rem;
   font-weight: 700;
-  line-height: 1.2;
+  line-height: 1.25;
   white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 
 .value small {
-  font-size: 0.68em;
-  font-weight: 700;
+  font-size: 0.65em;
+  font-weight: 600;
 }
 
 .goldText {
   color: var(--vl-gold);
 }
 
-@media (max-width: 399.98px) {
-  .stat {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 6px;
-  }
-
-  .icon {
-    width: 28px;
-    height: 28px;
-  }
-}
-
 @media (min-width: 768px) {
   .stats {
-    gap: 12px;
+    padding-top: 16px;
   }
 
   .stat {
-    padding: 12px 14px;
-    gap: 12px;
-  }
-
-  .icon {
-    width: 42px;
-    height: 42px;
+    padding: 0 18px;
   }
 
   .label {
-    font-size: 0.8rem;
+    font-size: 0.82rem;
   }
 
   .value {
-    font-size: 1.35rem;
+    font-size: 1.4rem;
   }
 }
