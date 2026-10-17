@@ -61,6 +61,14 @@ function ActionButton({ card, onClaim, claimBusy, countdownMs }) {
       </span>
     );
   }
+  if (card.reward.isUltimate) {
+    return (
+      <span className={`${styles.action} ${styles.actionLocked}`}>
+        <Lock size={13} /> <span className={styles.lockShort}>Locked</span>
+        <span className={styles.lockLong}>Unlocks on Day {card.day}</span>
+      </span>
+    );
+  }
   return (
     <span className={`${styles.action} ${styles.actionLocked}`}>
       <Lock size={13} /> Locked

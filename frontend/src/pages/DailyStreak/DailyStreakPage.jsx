@@ -72,9 +72,8 @@ export default function DailyStreakPage() {
         {data.resetNotice && <ResetBanner notice={data.resetNotice} />}
 
         <div className={styles.heroGrid}>
-          <StreakOverview streak={data.streak} stats={data.stats} rewards={data.rewards} onOpenCalendar={() => setHistoryOpen(true)} />
-          <UltimateReward reward={data.ultimateReward} variant="feature" />
-          <UltimateReward reward={data.ultimateReward} variant="compact" />
+          <StreakOverview streak={data.streak} stats={data.stats} onOpenCalendar={() => setHistoryOpen(true)} />
+          <UltimateReward reward={data.ultimateReward} rewards={data.rewards} />
         </div>
 
         <RewardGrid

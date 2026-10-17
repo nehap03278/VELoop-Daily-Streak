@@ -2,11 +2,8 @@ import { CalendarDays, ChevronRight, Flame } from 'lucide-react';
 import StreakStats from './StreakStats';
 import styles from './StreakOverview.module.css';
 
-const SEGMENT_TONE = { CLAIMED: styles.segDone, TODAY: styles.segToday, MISSED: styles.segMissed };
-
-/** Streak summary: current streak, cycle progress (one segment per backend card state) and stats. */
-export default function StreakOverview({ streak, stats, rewards, onOpenCalendar }) {
-  const claimedCount = rewards.filter((card) => card.state === 'CLAIMED').length;
+/** Streak summary: current streak, a status hint and the backend statistics. */
+export default function StreakOverview({ streak, stats, onOpenCalendar }) {
   const days = streak.currentStreak;
 
   let hint = 'Claim Day 1 to start your streak.';
@@ -31,20 +28,6 @@ export default function StreakOverview({ streak, stats, rewards, onOpenCalendar 
           <span className={styles.calendarLabel}>Calendar</span>
           <ChevronRight size={14} className={styles.calendarChevron} />
         </button>
-      </div>
-
-      <div className={styles.progress}>
-        <div className={styles.progressHead}>
-          <span>Cycle progress</span>
-          <span className={styles.progressCount}>
-            {claimedCount}/{rewards.length} days
-          </span>
-        </div>
-        <ol className={styles.segments} aria-hidden="true">
-          {rewards.map((card) => (
-            <li key={card.day} className={`${styles.segment} ${SEGMENT_TONE[card.state] || ''}`} />
-          ))}
-        </ol>
       </div>
 
       <StreakStats stats={stats} />

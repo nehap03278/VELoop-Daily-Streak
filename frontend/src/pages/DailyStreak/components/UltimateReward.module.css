@@ -1,174 +1,261 @@
+/*
+ * Ultimate reward showcase: crown | value block, with a full-width footer that carries the unlock status
+ * and a 7-step track (one step per day card) ending in the crown goal.
+ */
 .panel {
   position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1fr);
+  grid-template-areas:
+    'art body'
+    'footer footer';
   align-items: center;
-  gap: 12px;
+  column-gap: 12px;
+  padding: 16px 16px 14px;
   border-radius: var(--ds-radius);
-  border: 1px solid rgba(251, 191, 36, 0.22);
+  border: 1px solid rgba(251, 191, 36, 0.32);
   background:
-    radial-gradient(260px 160px at 15% 50%, rgba(251, 191, 36, 0.1), transparent 70%),
-    var(--ds-surface);
+    radial-gradient(240px 180px at 22% 40%, rgba(168, 85, 247, 0.32), transparent 70%),
+    radial-gradient(260px 160px at 100% 0%, rgba(251, 191, 36, 0.14), transparent 70%),
+    linear-gradient(140deg, #22133f 0%, #160d2a 55%, #100a1e 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
   overflow: hidden;
 }
 
+/* ----- crown ----- */
 .art {
-  flex-shrink: 0;
+  grid-area: art;
+  position: relative;
   display: grid;
   place-items: center;
+  min-height: 108px;
+}
+
+.halo {
+  position: absolute;
+  left: 12%;
+  right: 12%;
+  bottom: 14%;
+  height: 34%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(251, 191, 36, 0.4), transparent 70%);
+  filter: blur(10px);
 }
 
 .crown {
+  position: relative;
   width: 100%;
-  object-fit: contain;
-  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.4));
+  max-width: 190px;
+  filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.45));
+  animation: float 5.5s ease-in-out infinite;
 }
 
+/* ----- value block: eyebrow -> value (dominant) -> provider (secondary) ----- */
 .body {
-  flex: 1;
+  grid-area: body;
   min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 4px;
 }
 
 .eyebrow {
-  margin: 0;
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--vl-gold-3);
-}
-
-.value {
-  margin: 0;
-  font-family: var(--vl-font-display);
-  font-weight: 700;
-  font-size: 1.75rem;
-  line-height: 1.1;
-  letter-spacing: -0.02em;
-}
-
-.chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.78rem;
-  color: var(--vl-muted);
-  white-space: nowrap;
-}
-
-.chipLogo {
-  color: var(--vl-text);
-}
-
-.status {
-  flex-shrink: 0;
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  height: 28px;
-  padding: 0 10px;
+  height: 22px;
+  padding: 0 9px;
   border-radius: 999px;
-  border: 1px solid var(--ds-border);
-  background: var(--ds-surface-2);
-  font-size: 0.75rem;
-  font-weight: 600;
+  background: rgba(251, 191, 36, 0.14);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  color: var(--vl-gold-3);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.value {
+  margin: 8px 0 6px;
+  font-family: var(--vl-font-display);
+  font-size: 2.6rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  background: var(--vl-gold-grad);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 4px 14px rgba(245, 158, 11, 0.25));
+}
+
+.provider {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: #e9e5ff;
+  white-space: nowrap;
+}
+
+.providerLogo {
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: #fff;
+  color: #111;
+}
+
+/* ----- footer: status + 7-step track ----- */
+.footer {
+  grid-area: footer;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.statusRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0;
+  font-size: 0.8rem;
   color: var(--vl-muted);
+}
+
+.statusLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.statusLabel svg {
+  color: var(--vl-gold);
+}
+
+.statusLabel b {
+  color: var(--vl-text);
+}
+
+.remaining {
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgba(251, 191, 36, 0.12);
+  color: var(--vl-gold);
+  font-size: 0.74rem;
+  font-weight: 700;
   white-space: nowrap;
 }
 
 .claimed {
+  justify-content: flex-start;
   color: var(--vl-green-2);
-  border-color: rgba(34, 197, 94, 0.35);
-  background: rgba(34, 197, 94, 0.1);
+  font-weight: 600;
 }
 
 .available {
+  justify-content: flex-start;
   color: var(--vl-gold);
-  border-color: rgba(251, 191, 36, 0.4);
-  background: rgba(251, 191, 36, 0.1);
+  font-weight: 600;
 }
 
-/* ---------- compact (phones): one row ---------- */
-.compact {
+.track {
   display: flex;
-  padding: 12px 14px 12px 10px;
+  align-items: center;
+  gap: 5px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-.compact .art {
-  width: 84px;
+.seg {
+  flex: 1;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
 }
 
-/* ---------- feature (tablet / desktop) ---------- */
-.feature {
-  flex-direction: row;
-  padding: 20px 24px;
-  gap: 20px;
+.segDone {
+  background: linear-gradient(90deg, #8b5cf6, #a78bfa);
 }
 
-.feature .art {
-  width: 34%;
-  max-width: 200px;
+.segToday {
+  background: var(--vl-gold);
 }
 
-.feature .crown {
-  animation: float 5.5s ease-in-out infinite;
+.segMissed {
+  background: rgba(248, 113, 113, 0.7);
 }
 
-.feature .eyebrow {
-  font-size: 0.8rem;
-}
-
-.feature .value {
-  font-size: 2.6rem;
-}
-
-.feature .chip {
-  font-size: 0.88rem;
-}
-
-.feature .status {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-}
-
-@media (min-width: 1200px) {
-  .feature {
-    flex-direction: column;
-    justify-content: center;
-    text-align: center;
-    gap: 10px;
-  }
-
-  .feature .art {
-    width: 62%;
-    max-width: 240px;
-  }
-
-  .feature .body {
-    align-items: center;
-  }
+/* The last step is the goal: a gold crown token instead of a bar. */
+.segGoal {
+  flex: 0 0 22px;
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: #2b1800;
+  background: var(--vl-gold-grad);
+  box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.18);
 }
 
 @media (max-width: 359.98px) {
-  .compact .art {
-    width: 64px;
+  .value {
+    font-size: 2.1rem;
   }
 
-  .compact .value {
-    font-size: 1.45rem;
-  }
-
-  .compact .chip {
-    font-size: 0.7rem;
+  .provider {
+    font-size: 0.72rem;
     white-space: normal;
+  }
+}
+
+@media (min-width: 768px) {
+  .panel {
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1fr);
+    column-gap: 20px;
+    padding: 22px 24px 18px;
+  }
+
+  .crown {
+    max-width: 230px;
+  }
+
+  .eyebrow {
+    height: 26px;
+    font-size: 0.74rem;
+  }
+
+  .value {
+    font-size: 3.2rem;
+  }
+
+  .provider {
+    font-size: 0.92rem;
+  }
+
+  .statusRow {
+    font-size: 0.88rem;
+  }
+
+  .seg:not(.segGoal) {
+    height: 8px;
   }
 }
 
 @keyframes float {
   50% {
-    transform: translateY(-6px);
+    transform: translateY(-5px);
   }
 }

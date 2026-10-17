@@ -1,57 +1,80 @@
-import { Lock, CheckCircle2, Sparkles } from 'lucide-react';
+import { CheckCircle2, Crown, Lock, Sparkles } from 'lucide-react';
 import { FaAmazon } from 'react-icons/fa';
 import heroCrown from '../../../assets/rewards/hero-crown.webp';
 import styles from './UltimateReward.module.css';
 
-function StatusPill({ reward }) {
+const SEGMENT_TONE = { CLAIMED: styles.segDone, TODAY: styles.segToday, MISSED: styles.segMissed };
+
+function StatusRow({ reward, remaining }) {
   if (reward.status === 'CLAIMED') {
     return (
-      <span className={`${styles.status} ${styles.claimed}`}>
-        <CheckCircle2 size={14} /> Claimed
-      </span>
+      <p className={`${styles.statusRow} ${styles.claimed}`}>
+        <CheckCircle2 size={15} /> Claimed - enjoy your reward!
+      </p>
     );
   }
   if (reward.status === 'AVAILABLE') {
     return (
-      <span className={`${styles.status} ${styles.available}`}>
-        <Sparkles size={14} /> Unlocked today
-      </span>
+      <p className={`${styles.statusRow} ${styles.available}`}>
+        <Sparkles size={15} /> Unlocked - claim it today!
+      </p>
     );
   }
   return (
-    <span className={styles.status}>
-      <Lock size={13} /> Day {reward.unlockDay}
-    </span>
-  );
-}
-
-function ProviderChip({ reward }) {
-  if (reward.rewardType !== 'GIFT_CARD') return <span className={styles.chip}>{reward.subtitle}</span>;
-  return (
-    <span className={styles.chip}>
-      <FaAmazon size={12} className={styles.chipLogo} />
-      {reward.subtitle}
-    </span>
+    <p className={styles.statusRow}>
+      <span className={styles.statusLabel}>
+        <Lock size={14} /> Unlocks on <b>Day {reward.unlockDay}</b>
+      </span>
+      <span className={styles.remaining}>
+        {remaining} {remaining === 1 ? 'day' : 'days'} to go
+      </span>
+    </p>
   );
 }
 
 /**
- * Ultimate reward panel. Day, value, type and status are backend data (`ultimateReward`), so changing the
- * reward configuration updates this section without a code change.
+ * Ultimate reward showcase. Value, type, unlock day and status are backend data (`ultimateReward`); the track
+ * underneath mirrors the backend state of every day card, linking this section to the 7-day grid below.
  */
-export default function UltimateReward({ reward, variant = 'feature' }) {
-  const visibility = variant === 'compact' ? 'd-md-none' : 'd-none d-md-flex';
+export default function UltimateReward({ reward, rewards }) {
+  const remaining = rewards.filter((card) => card.state !== 'CLAIMED').length;
+  const isGiftCard = reward.rewardType === 'GIFT_CARD';
+
   return (
-    <section className={`${styles.panel} ${styles[variant]} ${visibility}`} aria-label="Ultimate reward">
+    <section className={styles.panel} aria-label="Ultimate reward">
       <div className={styles.art}>
+        <span className={styles.halo} aria-hidden="true" />
         <img src={heroCrown} alt="" className={styles.crown} />
       </div>
+
       <div className={styles.body}>
-        <p className={styles.eyebrow}>{reward.title}</p>
+        <span className={styles.eyebrow}>
+          <Crown size={13} strokeWidth={2.4} /> {reward.title}
+        </span>
         <p className={styles.value}>{reward.displayValue}</p>
-        <ProviderChip reward={reward} />
+        <p className={styles.provider}>
+          {isGiftCard && (
+            <span className={styles.providerLogo}>
+              <FaAmazon size={12} />
+            </span>
+          )}
+          {reward.subtitle}
+        </p>
       </div>
-      <StatusPill reward={reward} />
+
+      <div className={styles.footer}>
+        <StatusRow reward={reward} remaining={remaining} />
+        <ol className={styles.track} aria-hidden="true">
+          {rewards.map((card, index) => (
+            <li
+              key={card.day}
+              className={`${styles.seg} ${SEGMENT_TONE[card.state] || ''} ${index === rewards.length - 1 ? styles.segGoal : ''}`}
+            >
+              {index === rewards.length - 1 && <Crown size={11} strokeWidth={2.6} />}
+            </li>
+          ))}
+        </ol>
+      </div>
     </section>
   );
 }

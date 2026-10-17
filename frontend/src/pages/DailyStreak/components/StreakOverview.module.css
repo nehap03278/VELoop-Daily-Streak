@@ -1,6 +1,7 @@
 .card {
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
   gap: 18px;
   padding: 18px 16px 16px;
   border-radius: var(--ds-radius);
@@ -83,55 +84,6 @@
   display: none;
 }
 
-/* ----- progress ----- */
-.progress {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.progressHead {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.78rem;
-  color: var(--vl-muted);
-}
-
-.progressCount {
-  color: var(--vl-text);
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-}
-
-.segments {
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: minmax(0, 1fr);
-  gap: 5px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.segment {
-  height: 8px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.08);
-}
-
-.segDone {
-  background: linear-gradient(90deg, #8b5cf6, #a78bfa);
-}
-
-.segToday {
-  background: var(--vl-gold);
-  animation: pulse 1.8s ease-in-out infinite;
-}
-
-.segMissed {
-  background: rgba(248, 113, 113, 0.7);
-}
-
 @media (max-width: 359.98px) {
   .calendarLabel {
     display: none;
@@ -175,15 +127,5 @@
 
   .calendarChevron {
     display: block;
-  }
-
-  .segment {
-    height: 10px;
-  }
-}
-
-@keyframes pulse {
-  50% {
-    opacity: 0.45;
   }
 }
