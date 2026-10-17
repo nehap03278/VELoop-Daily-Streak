@@ -71,14 +71,18 @@ export default function StreakOverview({ streak, stats, rewards, countdownMs, ex
       <div className={styles.top}>
         <div className={styles.ring} style={{ '--p': progress }} aria-label={`${claimed} of ${rewards.length} days claimed`}>
           <div className={styles.ringInner}>
-            <Flame size={18} className={styles.flame} />
-            <b>{days}</b>
-            <small>{days === 1 ? 'day' : 'days'}</small>
+            <b>
+              {claimed}
+              <span className={styles.ringTotal}>/{rewards.length}</span>
+            </b>
+            <small>claimed</small>
           </div>
         </div>
 
         <div className={styles.summary}>
-          <p className={styles.kicker}>Current streak</p>
+          <p className={styles.kicker}>
+            <Flame size={13} className={styles.flame} /> Current streak
+          </p>
           <p className={styles.headline}>
             {days > 0 ? (
               <>
@@ -89,9 +93,6 @@ export default function StreakOverview({ streak, stats, rewards, countdownMs, ex
             )}
           </p>
           <ul className={styles.chips}>
-            <li>
-              <b>{claimed}</b>/{rewards.length} days
-            </li>
             <li>
               <b>{stats.checkedIn}</b> {stats.checkedIn === 1 ? 'check-in' : 'check-ins'}
             </li>
