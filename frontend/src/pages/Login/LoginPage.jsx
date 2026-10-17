@@ -1,12 +1,14 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, LogIn, UserPlus, Sparkles } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { wakeServer } from '../../services/authApi';
 import Logo from '../../components/common/Logo';
 import heroGift from '../../assets/rewards/hero-gift.webp';
 import styles from './LoginPage.module.css';
 
 const DEMO = { email: 'demo@veloop.in', password: 'Demo@1234' };
+const SLOW_HINT_MS = 3000;
 
 export default function LoginPage() {
   const { status, login, register } = useAuth();
@@ -17,6 +19,22 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
+  const [slow, setSlow] = useState(false);
+
+  // Wake the API host as soon as the form is on screen, so it is ready by the time the user submits.
+  useEffect(() => {
+    wakeServer();
+  }, []);
+
+  // If a submit takes a while, say why instead of leaving a silent spinner.
+  useEffect(() => {
+    if (!submitting) {
+      setSlow(false);
+      return undefined;
+    }
+    const id = window.setTimeout(() => setSlow(true), SLOW_HINT_MS);
+    return () => window.clearTimeout(id);
+  }, [submitting]);
 
   const destination = location.state?.from || '/daily-streak';
   if (status === 'authenticated') return <Navigate to={destination} replace />;
@@ -101,6 +119,12 @@ export default function LoginPage() {
           {error && (
             <p className={styles.error} role="alert">
               {error}
+            </p>
+          )}
+
+          {slow && (
+            <p className={styles.slow} role="status">
+              Waking up the server - the first login after a break can take up to a minute.
             </p>
           )}
 
