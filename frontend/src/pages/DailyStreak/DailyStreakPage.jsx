@@ -77,14 +77,13 @@ export default function DailyStreakPage() {
           <UltimateReward reward={data.ultimateReward} variant="compact" />
         </div>
 
-        <StreakMessage streak={data.streak} nextReward={data.stats.nextReward} countdownMs={countdownMs} expiryMs={expiryMs} />
-
         <RewardGrid
           rewards={data.rewards}
           onClaim={claimFlow.claim}
           claimBusy={claimFlow.isBusy}
           countdownMs={countdownMs}
           justClaimedDay={justClaimedDay}
+          aside={<StreakMessage streak={data.streak} nextReward={data.stats.nextReward} countdownMs={countdownMs} expiryMs={expiryMs} />}
         />
 
         <WhyStreak />

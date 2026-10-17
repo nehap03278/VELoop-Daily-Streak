@@ -2,14 +2,14 @@ import RewardCard from './RewardCard';
 import page from '../DailyStreak.module.css';
 
 /** The 7 (backend-configured) streak day cards. A final ultimate reward gets the full-width row on smaller screens. */
-export default function RewardGrid({ rewards, onClaim, claimBusy, countdownMs, justClaimedDay }) {
+export default function RewardGrid({ rewards, onClaim, claimBusy, countdownMs, justClaimedDay, aside }) {
   return (
     <section aria-labelledby="streak-rewards-title">
       <div className={page.sectionHead}>
         <h2 id="streak-rewards-title" className={page.sectionTitle}>
           {rewards.length}-day rewards
         </h2>
-        <span className={page.sectionMeta}>Claim one every day</span>
+        {aside}
       </div>
       <div className={page.cardGrid}>
         {rewards.map((card, index) => (

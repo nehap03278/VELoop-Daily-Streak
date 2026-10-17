@@ -98,7 +98,7 @@ export default function RewardCard({ card, onClaim, claimBusy, countdownMs, just
         <img src={rewardImage(reward.assetType)} alt="" className={`${styles.image} ${animated ? styles.animated : ''}`} loading="lazy" />
       </div>
       <div className={styles.info}>
-        {reward.isUltimate && <p className={styles.title}>{reward.title}</p>}
+        {wide && <p className={styles.title}>{reward.title}</p>}
         <p className={`${styles.value} ${valueTone}`}>{reward.displayValue}</p>
         <p className={styles.subtitle} title={reward.subtitle}>
           {reward.subtitle}

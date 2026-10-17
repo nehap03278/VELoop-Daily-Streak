@@ -2,52 +2,43 @@ import { Clock, Gift, Trophy } from 'lucide-react';
 import { formatDuration } from '../../../utils/serverClock';
 import styles from './StreakMessage.module.css';
 
-/** The "Come back tomorrow" strip; copy is chosen from backend status, times from backend timestamps. */
+/** Compact timer pill beside the rewards heading; copy follows backend status, times come from backend timestamps. */
 export default function StreakMessage({ streak, nextReward, countdownMs, expiryMs }) {
   let Icon = Clock;
   let tone = '';
-  let title;
-  let detail;
+  let content;
 
   if (streak.claimable) {
     Icon = Gift;
     tone = styles.ready;
-    title = `Day ${streak.currentDay} reward is ready`;
-    detail =
+    content =
       streak.currentStreak > 0 && streak.streakExpiresAt ? (
         <>
-          Claim within <b className={styles.time}>{formatDuration(expiryMs)}</b> to keep your streak.
+          Claim within <b className={styles.time}>{formatDuration(expiryMs)}</b>
         </>
       ) : (
-        'Claim it now to start your streak.'
+        <>Day {streak.currentDay} is ready</>
       );
   } else if (streak.cycleCompleted) {
     Icon = Trophy;
-    title = 'Cycle complete!';
-    detail = (
+    content = (
       <>
-        Next cycle unlocks in <b className={styles.time}>{formatDuration(countdownMs)}</b>
+        New cycle in <b className={styles.time}>{formatDuration(countdownMs)}</b>
       </>
     );
   } else {
-    title = 'Come back tomorrow';
-    detail = (
+    content = (
       <>
-        {nextReward ? `${nextReward.displayValue} ${nextReward.rewardType === 'VES' ? 'VEs' : 'gift card'}` : 'Next reward'} unlocks in{' '}
+        {nextReward ? `${nextReward.displayValue} ${nextReward.rewardType === 'VES' ? 'VEs' : 'gift card'}` : 'Next reward'} in{' '}
         <b className={styles.time}>{formatDuration(countdownMs)}</b>
       </>
     );
   }
 
   return (
-    <div className={`${styles.message} ${tone}`} role="status">
-      <span className={styles.icon} aria-hidden="true">
-        <Icon size={18} />
-      </span>
-      <p className={styles.text}>
-        <strong>{title}</strong>
-        <span>{detail}</span>
-      </p>
-    </div>
+    <p className={`${styles.pill} ${tone}`} role="status">
+      <Icon size={14} aria-hidden="true" />
+      <span>{content}</span>
+    </p>
   );
 }
