@@ -1,131 +1,371 @@
-.card {
+/* Streak hero: ring + summary on top, countdown panel underneath. */
+.hero {
+  position: relative;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   gap: 18px;
-  padding: 18px 16px 16px;
-  border-radius: var(--ds-radius);
-  border: 1px solid var(--ds-border);
+  padding: 18px;
+  border-radius: 24px;
+  border: 1px solid rgba(196, 181, 253, 0.16);
   background:
-    radial-gradient(420px 180px at 0% 0%, rgba(139, 92, 246, 0.16), transparent 70%),
-    var(--ds-surface);
+    radial-gradient(320px 220px at 0% 0%, rgba(139, 92, 246, 0.42), transparent 70%),
+    radial-gradient(280px 200px at 100% 100%, rgba(217, 70, 239, 0.18), transparent 70%),
+    linear-gradient(160deg, #1b1035 0%, #120b24 100%);
+  box-shadow: 0 20px 50px -20px rgba(91, 33, 182, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  overflow: hidden;
 }
 
 .top {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
+}
+
+/* ----- progress ring ----- */
+.ring {
+  --p: 0;
+  flex-shrink: 0;
+  width: 96px;
+  height: 96px;
+  padding: 7px;
+  border-radius: 50%;
+  background:
+    conic-gradient(from -90deg, #c4b5fd 0%, #e879f9 calc(var(--p) * 1%), rgba(255, 255, 255, 0.08) calc(var(--p) * 1%));
+  box-shadow: 0 0 30px rgba(168, 85, 247, 0.35);
+}
+
+.ringInner {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 30%, #2a1850, #130b26 75%);
+  line-height: 1;
 }
 
 .flame {
-  flex-shrink: 0;
-  width: 46px;
-  height: 46px;
-  display: grid;
-  place-items: center;
-  border-radius: 14px;
   color: #fb923c;
-  background: rgba(251, 146, 60, 0.12);
-  border: 1px solid rgba(251, 146, 60, 0.25);
+  margin-bottom: 2px;
+}
+
+.ringInner b {
+  font-family: var(--vl-font-display);
+  font-size: 1.7rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.ringInner small {
+  font-size: 0.66rem;
+  color: var(--vl-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* ----- summary ----- */
+.summary {
+  flex: 1;
+  min-width: 0;
+  padding-right: 36px;
+}
+
+.kicker {
+  margin: 0;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--vl-purple-2);
 }
 
 .headline {
-  flex: 1;
-  min-width: 0;
+  margin: 4px 0 10px;
+  font-family: var(--vl-font-display);
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
 }
 
-.count {
+.headline span {
+  background: linear-gradient(90deg, #f0abfc, #c4b5fd);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
   margin: 0;
-  font-family: var(--vl-font-display);
-  font-size: 1.6rem;
-  font-weight: 700;
-  line-height: 1.1;
-  letter-spacing: -0.02em;
+  padding: 0;
+  list-style: none;
+}
+
+.chips li {
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 0.7rem;
+  color: var(--vl-muted);
+  white-space: nowrap;
+}
+
+.chips b {
+  color: var(--vl-text);
   font-variant-numeric: tabular-nums;
 }
 
-.count span {
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--vl-muted);
-  letter-spacing: 0;
-}
-
-.hint {
-  margin: 4px 0 0;
-  font-size: 0.82rem;
-  color: var(--vl-muted);
-  line-height: 1.35;
-}
-
 .calendar {
-  flex-shrink: 0;
-  align-self: flex-start;
+  position: absolute;
+  top: 14px;
+  right: 14px;
   display: inline-flex;
   align-items: center;
   gap: 6px;
   height: 34px;
-  padding: 0 10px;
-  border-radius: 10px;
-  border: 1px solid var(--ds-border);
-  background: var(--ds-surface-2);
+  min-width: 34px;
+  justify-content: center;
+  padding: 0 8px;
+  border-radius: 11px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.06);
   color: var(--vl-purple-3);
-  font-size: 0.8rem;
+  font-size: 0.82rem;
   font-weight: 600;
+  backdrop-filter: blur(8px);
   transition: background 0.2s, border-color 0.2s;
 }
 
 .calendar:hover {
-  border-color: var(--ds-border-strong);
-  background: rgba(139, 92, 246, 0.14);
+  background: rgba(139, 92, 246, 0.2);
+  border-color: rgba(196, 181, 253, 0.3);
 }
 
-.calendarChevron {
+.calendarLabel {
   display: none;
 }
 
+/* ----- countdown panel ----- */
+.countdown {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 18px;
+  background: rgba(8, 4, 18, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.countdownHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.countdownLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--vl-muted);
+}
+
+.countdownNote {
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(251, 191, 36, 0.12);
+  color: var(--vl-gold);
+  font-size: 0.74rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.tiles {
+  display: flex;
+  align-items: stretch;
+}
+
+.tileWrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.colon {
+  width: 14px;
+  text-align: center;
+  font-family: var(--vl-font-display);
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.25);
+}
+
+.tile {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 0 6px;
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.03));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.tile b {
+  font-family: var(--vl-font-display);
+  font-size: 1.6rem;
+  font-weight: 700;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+
+.tile small {
+  font-size: 0.62rem;
+  color: var(--vl-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.ready {
+  border-color: rgba(251, 191, 36, 0.3);
+  background: rgba(251, 191, 36, 0.06);
+}
+
+.ready .countdownLabel {
+  color: var(--vl-gold-3);
+}
+
+.claim {
+  height: 46px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #fde68a, #fbbf24 45%, #f59e0b);
+  color: #2b1800;
+  font-weight: 800;
+  font-size: 0.95rem;
+  box-shadow: 0 10px 24px -8px rgba(245, 158, 11, 0.6);
+  transition: transform 0.15s, filter 0.2s;
+}
+
+.claim:hover:not(:disabled) {
+  filter: brightness(1.06);
+}
+
+.claim:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.claim:disabled {
+  cursor: progress;
+  opacity: 0.85;
+}
+
+.spinner {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid rgba(43, 24, 0, 0.3);
+  border-top-color: #2b1800;
+  animation: spin 0.7s linear infinite;
+}
+
 @media (max-width: 359.98px) {
-  .calendarLabel {
-    display: none;
+  .ring {
+    width: 80px;
+    height: 80px;
   }
 
-  .count {
-    font-size: 1.35rem;
+  .headline {
+    font-size: 1rem;
+  }
+
+  .tile b {
+    font-size: 1.3rem;
   }
 }
 
 @media (min-width: 768px) {
-  .card {
-    gap: 22px;
+  .hero {
     padding: 24px;
+    gap: 22px;
   }
 
-  .flame {
-    width: 56px;
-    height: 56px;
-    border-radius: 16px;
+  .ring {
+    width: 120px;
+    height: 120px;
+    padding: 9px;
   }
 
-  .count {
-    font-size: 2rem;
+  .ringInner b {
+    font-size: 2.2rem;
   }
 
-  .count span {
-    font-size: 1.1rem;
+  .headline {
+    font-size: 1.5rem;
   }
 
-  .hint {
-    font-size: 0.92rem;
+  .chips li {
+    font-size: 0.8rem;
+    padding: 4px 11px;
   }
 
   .calendar {
-    align-self: center;
-    height: 38px;
+    top: 20px;
+    right: 20px;
     padding: 0 12px;
-    font-size: 0.86rem;
   }
 
-  .calendarChevron {
-    display: block;
+  .calendarLabel {
+    display: inline;
+  }
+
+  .summary {
+    padding-right: 120px;
+  }
+
+  .countdown {
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+    padding: 16px 18px;
+  }
+
+  .countdownHead {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .tiles {
+    flex: 1;
+    max-width: 320px;
+    margin-left: auto;
+  }
+
+  .claim {
+    flex-basis: 100%;
+  }
+
+  .tile b {
+    font-size: 1.8rem;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
   }
 }

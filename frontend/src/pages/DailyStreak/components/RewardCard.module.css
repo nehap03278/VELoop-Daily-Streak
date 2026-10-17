@@ -1,169 +1,184 @@
 /*
- * Day card. Every card shares one vertical rhythm - top row, fixed-height art box, info block, action -
- * so pills, images, values and buttons line up across the row whatever the reward or state.
- * Sizes step up at 576 / 768 / 1200px; the ultimate card switches to a full-width row below 1200px (.wide).
+ * Streak journey. Each day is a step: a node on a connecting rail plus a glass card.
+ * Phones/tablets: a vertical rail with horizontal rows. Desktop (>= 1200px): a horizontal rail with 7 columns.
  */
-.card {
-  --card-pad-x: 8px;
-  --card-pad-y: 10px;
-  --art-h: 56px;
-  --chip-h: 20px;
-  --action-h: 32px;
+.journey {
+  --node: 32px;
+  --gap: 10px;
 
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--gap);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.step {
   position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
+  display: grid;
+  grid-template-columns: var(--node) minmax(0, 1fr);
+  align-items: center;
+  column-gap: 12px;
+}
+
+/* rail segment from this node to the next one */
+.step::before {
+  content: '';
+  position: absolute;
+  left: calc(var(--node) / 2 - 1px);
+  top: 50%;
+  bottom: calc(-50% - var(--gap));
+  width: 2px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.last::before {
+  display: none;
+}
+
+.claimed::before {
+  background: linear-gradient(180deg, #a78bfa, #e879f9);
+}
+
+/* ----- node ----- */
+.node {
+  position: relative;
+  z-index: 1;
+  width: var(--node);
+  height: var(--node);
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.12);
+  background: #120b22;
+  color: var(--vl-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.claimed .node {
+  border-color: transparent;
+  background: linear-gradient(135deg, #a78bfa, #e879f9);
+  color: #fff;
+  box-shadow: 0 0 14px rgba(232, 121, 249, 0.45);
+}
+
+.next .node {
+  border-color: #a78bfa;
+  color: #ede9fe;
+  box-shadow: 0 0 0 4px rgba(167, 139, 250, 0.15);
+}
+
+.available .node {
+  border-color: transparent;
+  background: var(--vl-gold);
+  color: #2b1800;
+  box-shadow: 0 0 0 5px rgba(251, 191, 36, 0.2);
+  animation: ping 2s ease-in-out infinite;
+}
+
+.missed .node {
+  border-color: rgba(248, 113, 113, 0.6);
+  color: var(--vl-red);
+}
+
+.ultimate .node {
+  border-color: rgba(251, 191, 36, 0.6);
+  color: var(--vl-gold);
+}
+
+.ultimate.claimed .node {
+  background: var(--vl-gold-grad);
+  color: #2b1800;
+}
+
+/* ----- card ----- */
+.card {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
   min-width: 0;
-  height: 100%;
-  padding: var(--card-pad-y) var(--card-pad-x);
-  border-radius: 16px;
-  border: 1px solid var(--ds-border);
-  background: var(--ds-surface);
-  text-align: center;
-  transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+  padding: 10px 12px 10px 10px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+  transition: transform 0.2s ease, border-color 0.2s ease;
 }
 
 @media (hover: hover) {
   .card:hover {
     transform: translateY(-2px);
-    border-color: var(--ds-border-strong);
+    border-color: rgba(255, 255, 255, 0.16);
   }
 }
 
-/* ----- states ----- */
-.claimed {
-  border-color: rgba(34, 197, 94, 0.28);
-  background: rgba(34, 197, 94, 0.05);
+.claimed .card {
+  border-color: rgba(192, 132, 252, 0.22);
+  background: linear-gradient(180deg, rgba(168, 85, 247, 0.1), rgba(168, 85, 247, 0.03));
 }
 
-.available {
-  border-color: rgba(251, 191, 36, 0.7);
-  background: rgba(251, 191, 36, 0.07);
-  box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.12);
+.next .card {
+  border-color: rgba(167, 139, 250, 0.4);
+  background: linear-gradient(180deg, rgba(139, 92, 246, 0.14), rgba(139, 92, 246, 0.04));
 }
 
-.next {
-  border-color: rgba(167, 139, 250, 0.45);
-  background: rgba(139, 92, 246, 0.07);
+.available .card {
+  border-color: rgba(251, 191, 36, 0.6);
+  background: linear-gradient(180deg, rgba(251, 191, 36, 0.12), rgba(251, 191, 36, 0.03));
+  box-shadow: 0 10px 30px -12px rgba(251, 191, 36, 0.45);
 }
 
-.ultimate {
-  border-color: rgba(251, 191, 36, 0.4);
+.missed .card {
+  border-color: rgba(248, 113, 113, 0.3);
+  background: rgba(239, 68, 68, 0.05);
+}
+
+.ultimate .card {
+  border: 1px solid transparent;
   background:
-    radial-gradient(200px 140px at 20% 50%, rgba(168, 85, 247, 0.22), transparent 70%),
-    linear-gradient(140deg, rgba(251, 191, 36, 0.1), rgba(139, 92, 246, 0.06) 60%, rgba(255, 255, 255, 0.02));
+    linear-gradient(135deg, #24163d, #150d26) padding-box,
+    linear-gradient(135deg, #fde68a, #a855f7 55%, #fbbf24) border-box;
+  box-shadow: 0 14px 34px -16px rgba(251, 191, 36, 0.45);
 }
 
-.ultimate.claimed {
-  border-color: rgba(34, 197, 94, 0.35);
-}
-
-.ultimate.available {
-  border-color: rgba(251, 191, 36, 0.7);
-}
-
-.justClaimed {
+.justClaimed .card {
   animation: reveal 0.6s cubic-bezier(0.2, 0.9, 0.3, 1.3);
 }
 
-/* ----- top row: day label left, one status chip right ----- */
-.top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 4px;
-  min-width: 0;
-  height: var(--chip-h);
-}
-
-.dayPill,
-.badge {
-  height: var(--chip-h);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 999px;
-  font-size: 0.68rem;
-  line-height: 1;
-  white-space: nowrap;
-}
-
-.dayPill {
-  flex-shrink: 0;
-  font-weight: 600;
-  color: var(--vl-muted);
-}
-
-.dayPillGold {
-  color: var(--vl-gold-3);
-}
-
-.claimed .dayPill {
-  color: #bbf7d0;
-}
-
-.available .dayPill {
-  color: var(--vl-gold-3);
-}
-
-.badge {
-  min-width: 0;
-  padding: 0 7px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  font-size: 0.62rem;
-  font-weight: 700;
-}
-
-.badgeDone {
-  flex-shrink: 0;
-  width: var(--chip-h);
-  padding: 0;
-  color: #052e16;
-  background: var(--vl-green);
-}
-
-.badgeToday,
-.badgeVip {
-  color: #2b1800;
-  background: var(--vl-gold);
-}
-
-.badgeNext,
-.badgeType {
-  color: var(--vl-purple-3);
-  background: rgba(139, 92, 246, 0.18);
-}
-
-.badgeMissed {
-  color: #fecaca;
-  background: rgba(239, 68, 68, 0.22);
-}
-
-/* ----- art: a fixed box, every asset is scaled into the same space ----- */
 .art {
-  height: var(--art-h);
-  margin: 8px 0 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .image {
-  width: 100%;
-  height: 100%;
+  width: 86%;
+  height: 86%;
   object-fit: contain;
-  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.35));
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.4));
 }
 
-.animated {
-  animation: float 4.5s ease-in-out infinite;
+.step:not(.claimed):not(.available):not(.next):not(.ultimate) .image {
+  opacity: 0.7;
 }
 
-/* Days not reached yet sit back a little so the active cards read first. */
-.card:not(.claimed):not(.available):not(.next):not(.ultimate) .image {
-  opacity: 0.75;
+.missed .image {
+  filter: grayscale(0.8) brightness(0.7);
+}
+
+.ultimate .art {
+  background: radial-gradient(circle, rgba(251, 191, 36, 0.22), transparent 70%);
+}
+
+.ultimate .image {
+  width: 112%;
+  height: 112%;
 }
 
 /* ----- info ----- */
@@ -171,92 +186,119 @@
   min-width: 0;
 }
 
-.title,
-.subtitle {
-  margin: 0;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.day {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--vl-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
   white-space: nowrap;
 }
 
-.title {
-  font-size: 0.66rem;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--vl-gold-3);
+.tag {
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 7px;
+  border-radius: 999px;
+  font-size: 0.6rem;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tagToday,
+.tagVip {
+  color: #2b1800;
+  background: var(--vl-gold);
+}
+
+.tagNext {
+  color: #fff;
+  background: linear-gradient(135deg, #8b5cf6, #d946ef);
+}
+
+.tagType {
+  color: var(--vl-purple-3);
+  background: rgba(139, 92, 246, 0.16);
+}
+
+.tagMissed {
+  color: #fecaca;
+  background: rgba(239, 68, 68, 0.22);
 }
 
 .value {
-  margin: 0;
+  margin: 2px 0 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-family: var(--vl-font-display);
+  font-size: 1.2rem;
   font-weight: 700;
-  font-size: 1.25rem;
-  line-height: 1.15;
-  letter-spacing: -0.02em;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
   font-variant-numeric: tabular-nums;
 }
 
-.valueGreen {
-  color: var(--vl-green-2);
+.unit {
+  font-family: var(--vl-font-body);
+  font-size: 0.74rem;
+  font-weight: 500;
+  color: var(--vl-muted);
+  letter-spacing: 0;
 }
 
-.valueGold {
+.claimed .value {
+  color: #e9d5ff;
+}
+
+.available .value,
+.ultimate .value {
   color: var(--vl-gold);
 }
 
-.valuePurple {
-  color: var(--vl-text);
-}
-
-.valueMissed {
-  color: var(--vl-red);
-}
-
-.subtitle {
-  font-size: 0.64rem;
-  line-height: 1.3;
-  color: var(--vl-muted);
-}
-
-/* ----- action: identical size in every state ----- */
+/* ----- action pill ----- */
 .footer {
-  margin-top: auto;
-  padding-top: 10px;
+  min-width: 0;
 }
 
 .action {
-  width: 100%;
-  height: var(--action-h);
+  height: 30px;
+  min-width: 76px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 4px;
-  padding: 0 6px;
-  border-radius: 10px;
+  padding: 0 12px;
+  border-radius: 999px;
   border: 0;
-  font-size: 0.7rem;
-  font-weight: 600;
+  font-size: 0.74rem;
+  font-weight: 700;
   line-height: 1;
   white-space: nowrap;
-  overflow: hidden;
-}
-
-.action svg {
-  flex-shrink: 0;
 }
 
 .actionClaim {
+  height: 34px;
   color: #2b1800;
-  background: var(--vl-gold);
-  font-weight: 700;
+  background: linear-gradient(135deg, #fde68a, #fbbf24 50%, #f59e0b);
+  box-shadow: 0 8px 18px -6px rgba(245, 158, 11, 0.6);
   cursor: pointer;
   transition: filter 0.2s, transform 0.15s;
 }
 
 .actionClaim:hover:not(:disabled) {
-  filter: brightness(1.08);
+  filter: brightness(1.06);
 }
 
 .actionClaim:active:not(:disabled) {
@@ -268,34 +310,25 @@
   opacity: 0.85;
 }
 
-.claimLong,
-.claimChevron {
-  display: none;
+.actionClaimed {
+  color: #e9d5ff;
+  background: rgba(168, 85, 247, 0.16);
 }
 
-.actionClaimed {
-  color: var(--vl-green-2);
-  background: rgba(34, 197, 94, 0.1);
+.actionTimer {
+  color: #ede9fe;
+  background: rgba(139, 92, 246, 0.24);
+  font-variant-numeric: tabular-nums;
 }
 
 .actionLocked {
   color: var(--vl-dim);
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .ultimate .actionLocked {
   color: var(--vl-gold);
   background: rgba(251, 191, 36, 0.12);
-  border: 1px solid rgba(251, 191, 36, 0.35);
-}
-
-.lockLong {
-  display: none;
-}
-
-.actionTimer {
-  color: var(--vl-purple-3);
-  background: rgba(139, 92, 246, 0.16);
 }
 
 .actionMissed {
@@ -303,252 +336,125 @@
   background: rgba(239, 68, 68, 0.12);
 }
 
-.timer {
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 0.01em;
-}
-
 .spinner {
-  width: 16px;
-  height: 16px;
+  width: 15px;
+  height: 15px;
   border-radius: 50%;
   border: 2px solid rgba(43, 24, 0, 0.3);
   border-top-color: #2b1800;
   animation: spin 0.7s linear infinite;
 }
 
-/* ----- MISSED (backend state after a streak reset) ----- */
-.missed {
-  border-color: rgba(248, 113, 113, 0.35);
-  background: rgba(239, 68, 68, 0.05);
-}
-
-.missed .image {
-  filter: grayscale(0.7) brightness(0.7);
-}
-
-/* ----- sizes ----- */
-/* Small phones: the reward-type chip ("Gift Card", "Coin") has no room beside the day pill. */
-@media (max-width: 575.98px) {
-  .badgeType {
-    display: none;
-  }
-
-  .actionTimer svg {
-    display: none;
-  }
-}
-
-@media (min-width: 360px) {
-  .card {
-    --art-h: 62px;
-  }
-
-  .claimChevron {
-    display: block;
-  }
-}
-
-@media (min-width: 576px) {
-  .card {
-    --card-pad-x: 10px;
-    --card-pad-y: 12px;
-    --art-h: 84px;
-    --action-h: 38px;
-  }
-
-  .title {
-    font-size: 0.8rem;
-  }
-
-  .value {
-    font-size: 1.45rem;
-  }
-
-  .subtitle {
-    font-size: 0.72rem;
-  }
-
-  .action {
-    font-size: 0.8rem;
-  }
-
-  .claimShort {
-    display: none;
-  }
-
-  .claimLong {
-    display: inline;
-  }
-}
-
+/* ----- tablet: roomier rows ----- */
 @media (min-width: 768px) {
+  .journey {
+    --node: 36px;
+    --gap: 12px;
+  }
+
   .card {
-    --card-pad-x: 12px;
-    --card-pad-y: 14px;
-    --art-h: 100px;
-    --chip-h: 24px;
-    --action-h: 40px;
-    border-radius: 18px;
-  }
-
-  .dayPill {
-    font-size: 0.8rem;
-  }
-
-  .badge {
-    padding: 0 9px;
-    font-size: 0.7rem;
-  }
-
-  .badgeDone {
-    padding: 0;
+    grid-template-columns: 64px minmax(0, 1fr) auto;
+    gap: 16px;
+    padding: 12px 16px 12px 12px;
   }
 
   .art {
-    margin: 10px 0 8px;
-  }
-
-  .title {
-    font-size: 0.88rem;
+    width: 64px;
+    height: 64px;
   }
 
   .value {
-    font-size: 1.6rem;
-  }
-
-  .subtitle {
-    font-size: 0.78rem;
-  }
-
-  .footer {
-    padding-top: 12px;
+    font-size: 1.4rem;
   }
 
   .action {
-    font-size: 0.86rem;
-    border-radius: 12px;
+    height: 34px;
+    min-width: 96px;
+    font-size: 0.8rem;
   }
 }
 
-@media (min-width: 768px) and (max-width: 1199.98px) {
-  .card {
-    --art-h: 80px;
-  }
-}
-
+/* ----- desktop: horizontal rail, 7 columns ----- */
 @media (min-width: 1200px) {
-  .card {
-    --art-h: 92px;
+  .journey {
+    --gap: 14px;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
   }
 
-  .wide .title {
-    display: none;
+  .step {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: var(--node) 1fr;
+    row-gap: 14px;
+    justify-items: center;
+    align-items: stretch;
+  }
+
+  .step::before {
+    left: 50%;
+    right: calc(-50% - var(--gap));
+    top: calc(var(--node) / 2 - 1px);
+    bottom: auto;
+    width: auto;
+    height: 2px;
+  }
+
+  .claimed::before {
+    background: linear-gradient(90deg, #a78bfa, #e879f9);
+  }
+
+  .card {
+    width: 100%;
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+    gap: 10px;
+    padding: 14px 12px 12px;
+    text-align: center;
+  }
+
+  .art {
+    width: 76px;
+    height: 76px;
+    border-radius: 18px;
+  }
+
+  .meta {
+    justify-content: center;
   }
 
   .value {
-    font-size: 1.7rem;
+    margin-top: 4px;
+    font-size: 1.5rem;
+  }
+
+  .unit {
+    display: block;
+    margin-top: 2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .footer {
+    width: 100%;
+  }
+
+  .action {
+    width: 100%;
+    min-width: 0;
   }
 }
 
-/* ----- ultimate card as a full-width row (phones and tablets): art | top / info / action ----- */
-@media (max-width: 1199.98px) {
-  .wide {
-    grid-column: 1 / -1;
-    display: grid;
-    grid-template-columns: var(--art-w) minmax(0, 1fr);
-    grid-template-areas:
-      'art top'
-      'art info'
-      'art footer';
-    align-items: center;
-    column-gap: 14px;
-    row-gap: 4px;
-    padding: 14px 16px 14px 12px;
-    text-align: left;
-    --art-w: 104px;
-    --art-h: 92px;
-  }
-
-  .wide .top {
-    grid-area: top;
-    justify-content: flex-start;
-    gap: 8px;
-  }
-
-  .wide .art {
-    grid-area: art;
-    margin: 0;
-  }
-
-  .wide .info {
-    grid-area: info;
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    column-gap: 8px;
-  }
-
-  .wide .title {
-    flex-basis: 100%;
-  }
-
-  .wide .value {
-    font-size: 1.6rem;
-  }
-
-  .wide .subtitle {
-    font-size: 0.78rem;
-    color: #e9e5ff;
-  }
-
-  .wide .footer {
-    grid-area: footer;
-    margin: 0;
-    padding-top: 6px;
-  }
-
-  .wide .lockShort {
-    display: none;
-  }
-
-  .wide .lockLong {
-    display: inline;
-  }
-}
-
-@media (max-width: 359.98px) {
-  .wide {
-    --art-w: 76px;
-    --art-h: 72px;
-  }
-}
-
-@media (min-width: 768px) and (max-width: 1199.98px) {
-  .wide {
-    padding: 16px 22px 16px 16px;
-    column-gap: 22px;
-    --art-w: 150px;
-    --art-h: 116px;
-  }
-
-  .wide .footer {
-    max-width: 280px;
-  }
-}
-
-@keyframes float {
+@keyframes ping {
   50% {
-    transform: translateY(-5px);
+    box-shadow: 0 0 0 9px rgba(251, 191, 36, 0.05);
   }
 }
 
 @keyframes reveal {
   0% {
-    transform: scale(0.92);
+    transform: scale(0.94);
   }
   60% {
-    transform: scale(1.04);
+    transform: scale(1.03);
   }
   100% {
     transform: scale(1);

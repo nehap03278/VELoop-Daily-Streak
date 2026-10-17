@@ -11,7 +11,6 @@ import StreakHeader from './components/StreakHeader';
 import StreakOverview from './components/StreakOverview';
 import UltimateReward from './components/UltimateReward';
 import ResetBanner from './components/ResetBanner';
-import StreakMessage from './components/StreakMessage';
 import RewardGrid from './components/RewardGrid';
 import WhyStreak from './components/WhyStreak';
 import TrustFooter from './components/TrustFooter';
@@ -72,7 +71,16 @@ export default function DailyStreakPage() {
         {data.resetNotice && <ResetBanner notice={data.resetNotice} />}
 
         <div className={styles.heroGrid}>
-          <StreakOverview streak={data.streak} stats={data.stats} onOpenCalendar={() => setHistoryOpen(true)} />
+          <StreakOverview
+            streak={data.streak}
+            stats={data.stats}
+            rewards={data.rewards}
+            countdownMs={countdownMs}
+            expiryMs={expiryMs}
+            onClaim={claimFlow.claim}
+            claimBusy={claimFlow.isBusy}
+            onOpenCalendar={() => setHistoryOpen(true)}
+          />
           <UltimateReward reward={data.ultimateReward} rewards={data.rewards} />
         </div>
 
@@ -82,7 +90,6 @@ export default function DailyStreakPage() {
           claimBusy={claimFlow.isBusy}
           countdownMs={countdownMs}
           justClaimedDay={justClaimedDay}
-          aside={<StreakMessage streak={data.streak} nextReward={data.stats.nextReward} countdownMs={countdownMs} expiryMs={expiryMs} />}
         />
 
         <WhyStreak />

@@ -1,93 +1,79 @@
-/*
- * Ultimate reward showcase: crown | value block, with a full-width footer that carries the unlock status
- * and a 7-step track (one step per day card) ending in the crown goal.
- */
+/* Ultimate reward: gradient-bordered card, value block on the left, crown spilling off the right edge. */
 .panel {
   position: relative;
-  display: grid;
-  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1fr);
-  grid-template-areas:
-    'art body'
-    'footer footer';
-  align-items: center;
-  column-gap: 12px;
-  padding: 16px 16px 14px;
-  border-radius: var(--ds-radius);
-  border: 1px solid rgba(251, 191, 36, 0.32);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 18px;
+  min-height: 210px;
+  padding: 20px 18px 16px;
+  border-radius: 24px;
+  border: 1px solid transparent;
   background:
-    radial-gradient(240px 180px at 22% 40%, rgba(168, 85, 247, 0.32), transparent 70%),
-    radial-gradient(260px 160px at 100% 0%, rgba(251, 191, 36, 0.14), transparent 70%),
-    linear-gradient(140deg, #22133f 0%, #160d2a 55%, #100a1e 100%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    radial-gradient(260px 200px at 85% 35%, rgba(168, 85, 247, 0.35), transparent 70%),
+    linear-gradient(150deg, #22143d 0%, #130b24 100%) padding-box,
+    linear-gradient(135deg, rgba(253, 230, 138, 0.9), rgba(168, 85, 247, 0.5) 45%, rgba(251, 191, 36, 0.8)) border-box;
+  box-shadow: 0 20px 50px -24px rgba(251, 191, 36, 0.5);
   overflow: hidden;
 }
 
-/* ----- crown ----- */
-.art {
-  grid-area: art;
-  position: relative;
-  display: grid;
-  place-items: center;
-  min-height: 108px;
-}
-
-.halo {
+.glow {
   position: absolute;
-  left: 12%;
-  right: 12%;
-  bottom: 14%;
-  height: 34%;
+  right: -10%;
+  top: 8%;
+  width: 70%;
+  height: 70%;
   border-radius: 50%;
-  background: radial-gradient(ellipse, rgba(251, 191, 36, 0.4), transparent 70%);
-  filter: blur(10px);
+  background: radial-gradient(circle, rgba(251, 191, 36, 0.25), transparent 65%);
+  filter: blur(18px);
+  pointer-events: none;
 }
 
 .crown {
-  position: relative;
-  width: 100%;
-  max-width: 190px;
-  filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.45));
+  position: absolute;
+  right: -18px;
+  top: 6px;
+  width: 58%;
+  max-width: 250px;
+  filter: drop-shadow(0 14px 22px rgba(0, 0, 0, 0.5));
   animation: float 5.5s ease-in-out infinite;
+  pointer-events: none;
 }
 
-/* ----- value block: eyebrow -> value (dominant) -> provider (secondary) ----- */
+/* ----- value block ----- */
 .body {
-  grid-area: body;
-  min-width: 0;
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  max-width: 55%;
 }
 
 .eyebrow {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  height: 22px;
-  padding: 0 9px;
-  border-radius: 999px;
-  background: rgba(251, 191, 36, 0.14);
-  border: 1px solid rgba(251, 191, 36, 0.3);
-  color: var(--vl-gold-3);
-  font-size: 0.66rem;
+  font-size: 0.68rem;
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
+  color: var(--vl-gold-3);
   white-space: nowrap;
 }
 
 .value {
-  margin: 8px 0 6px;
+  margin: 6px 0 8px;
   font-family: var(--vl-font-display);
-  font-size: 2.6rem;
+  font-size: 3rem;
   font-weight: 800;
   line-height: 1;
-  letter-spacing: -0.02em;
-  background: var(--vl-gold-grad);
+  letter-spacing: -0.03em;
+  background: linear-gradient(180deg, #fff7d6 0%, #fde68a 35%, #f59e0b 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  filter: drop-shadow(0 4px 14px rgba(245, 158, 11, 0.25));
+  filter: drop-shadow(0 6px 18px rgba(245, 158, 11, 0.3));
 }
 
 .provider {
@@ -95,9 +81,12 @@
   align-items: center;
   gap: 7px;
   margin: 0;
-  font-size: 0.82rem;
-  font-weight: 500;
-  color: #e9e5ff;
+  padding: 4px 10px 4px 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 0.76rem;
+  font-weight: 600;
   white-space: nowrap;
 }
 
@@ -106,156 +95,109 @@
   height: 20px;
   display: grid;
   place-items: center;
-  flex-shrink: 0;
   border-radius: 50%;
   background: #fff;
   color: #111;
 }
 
-/* ----- footer: status + 7-step track ----- */
+/* ----- footer: unlock status + progress bar ----- */
 .footer {
-  grid-area: footer;
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  margin-top: 14px;
-  padding-top: 12px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(8, 4, 18, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(10px);
 }
 
-.statusRow {
+.footerHead {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  margin: 0;
   font-size: 0.8rem;
   color: var(--vl-muted);
 }
 
-.statusLabel {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.statusLabel svg {
-  color: var(--vl-gold);
-}
-
-.statusLabel b {
+.footerHead b {
   color: var(--vl-text);
 }
 
-.remaining {
-  padding: 3px 9px;
-  border-radius: 999px;
-  background: rgba(251, 191, 36, 0.12);
-  color: var(--vl-gold);
-  font-size: 0.74rem;
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.76rem;
   font-weight: 700;
+  color: var(--vl-gold);
   white-space: nowrap;
 }
 
 .claimed {
-  justify-content: flex-start;
   color: var(--vl-green-2);
-  font-weight: 600;
 }
 
 .available {
-  justify-content: flex-start;
   color: var(--vl-gold);
-  font-weight: 600;
 }
 
-.track {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.seg {
-  flex: 1;
+.bar {
   height: 6px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
 }
 
-.segDone {
-  background: linear-gradient(90deg, #8b5cf6, #a78bfa);
-}
-
-.segToday {
-  background: var(--vl-gold);
-}
-
-.segMissed {
-  background: rgba(248, 113, 113, 0.7);
-}
-
-/* The last step is the goal: a gold crown token instead of a bar. */
-.segGoal {
-  flex: 0 0 22px;
-  width: 22px;
-  height: 22px;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  color: #2b1800;
-  background: var(--vl-gold-grad);
-  box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.18);
+.bar span {
+  display: block;
+  height: 100%;
+  min-width: 6px;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #a78bfa, #e879f9, #fbbf24);
 }
 
 @media (max-width: 359.98px) {
   .value {
-    font-size: 2.1rem;
+    font-size: 2.4rem;
   }
 
-  .provider {
-    font-size: 0.72rem;
-    white-space: normal;
+  .crown {
+    width: 52%;
   }
 }
 
 @media (min-width: 768px) {
   .panel {
-    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1fr);
-    column-gap: 20px;
-    padding: 22px 24px 18px;
+    min-height: 240px;
+    padding: 24px 24px 20px;
   }
 
   .crown {
-    max-width: 230px;
-  }
-
-  .eyebrow {
-    height: 26px;
-    font-size: 0.74rem;
+    width: 46%;
+    max-width: 260px;
+    right: 14px;
+    top: 10px;
   }
 
   .value {
-    font-size: 3.2rem;
+    font-size: 3.6rem;
+  }
+
+  .eyebrow {
+    font-size: 0.74rem;
   }
 
   .provider {
-    font-size: 0.92rem;
-  }
-
-  .statusRow {
-    font-size: 0.88rem;
-  }
-
-  .seg:not(.segGoal) {
-    height: 8px;
+    font-size: 0.86rem;
   }
 }
 
 @keyframes float {
   50% {
-    transform: translateY(-5px);
+    transform: translateY(-6px) rotate(-1deg);
   }
 }

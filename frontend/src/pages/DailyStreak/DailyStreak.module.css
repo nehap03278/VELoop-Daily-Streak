@@ -31,9 +31,16 @@
   margin: 6px 2px 10px;
 }
 
+.sectionMeta {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--vl-muted);
+  font-variant-numeric: tabular-nums;
+}
+
 .sectionTitle {
   margin: 0;
-  font-size: 1.02rem;
+  font-size: 1.1rem;
   font-weight: 700;
   letter-spacing: -0.01em;
 }
@@ -78,7 +85,14 @@
     padding-right: 24px;
   }
 
-  .sectionTitle {
+  .sectionMeta {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--vl-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.sectionTitle {
     font-size: 1.2rem;
   }
 

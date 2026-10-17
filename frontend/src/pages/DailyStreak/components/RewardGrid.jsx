@@ -1,17 +1,21 @@
 import RewardCard from './RewardCard';
 import page from '../DailyStreak.module.css';
+import styles from './RewardCard.module.css';
 
-/** The 7 (backend-configured) streak day cards. A final ultimate reward gets the full-width row on smaller screens. */
-export default function RewardGrid({ rewards, onClaim, claimBusy, countdownMs, justClaimedDay, aside }) {
+/** The 7 (backend-configured) streak days as a connected journey: vertical on phones, horizontal on desktop. */
+export default function RewardGrid({ rewards, onClaim, claimBusy, countdownMs, justClaimedDay }) {
+  const claimed = rewards.filter((card) => card.state === 'CLAIMED').length;
   return (
     <section aria-labelledby="streak-rewards-title">
       <div className={page.sectionHead}>
         <h2 id="streak-rewards-title" className={page.sectionTitle}>
-          {rewards.length}-day rewards
+          Your {rewards.length}-day journey
         </h2>
-        {aside}
+        <span className={page.sectionMeta}>
+          {claimed} of {rewards.length} claimed
+        </span>
       </div>
-      <div className={page.cardGrid}>
+      <ol className={styles.journey}>
         {rewards.map((card, index) => (
           <RewardCard
             key={card.day}
@@ -20,10 +24,10 @@ export default function RewardGrid({ rewards, onClaim, claimBusy, countdownMs, j
             claimBusy={claimBusy}
             countdownMs={countdownMs}
             justClaimed={justClaimedDay === card.day && card.status === 'CLAIMED'}
-            wide={card.reward.isUltimate && index === rewards.length - 1}
+            isLast={index === rewards.length - 1}
           />
         ))}
-      </div>
+      </ol>
     </section>
   );
 }

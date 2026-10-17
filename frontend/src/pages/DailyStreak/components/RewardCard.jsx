@@ -1,37 +1,29 @@
-import { Check, CheckCircle2, ChevronRight, Lock, XCircle } from 'lucide-react';
+import { Check, ChevronRight, Crown, Lock, X } from 'lucide-react';
 import { rewardImage } from '../../../utils/rewardAssets';
 import { formatDuration } from '../../../utils/serverClock';
 import styles from './RewardCard.module.css';
 
 // Visual treatment follows the backend-decided `state` (TODAY | CLAIMED | MISSED | LOCKED);
 // whether the claim button is shown follows the backend `status` (AVAILABLE), per spec section 34.
-// Every corner indicator is the same-height chip sitting in the top row, so all cards line up.
-function CornerBadge({ card }) {
-  if (card.state === 'CLAIMED') {
-    return (
-      <span className={`${styles.badge} ${styles.badgeDone}`} aria-hidden="true">
-        <Check size={12} strokeWidth={3} />
-      </span>
-    );
-  }
-  if (card.state === 'TODAY') return <span className={`${styles.badge} ${styles.badgeToday}`}>Today</span>;
-  if (card.state === 'MISSED') return <span className={`${styles.badge} ${styles.badgeMissed}`}>Missed</span>;
-  if (card.isNext) return <span className={`${styles.badge} ${styles.badgeNext}`}>Next</span>;
+function Node({ card }) {
+  if (card.state === 'CLAIMED') return <Check size={14} strokeWidth={3} />;
+  if (card.state === 'MISSED') return <X size={14} strokeWidth={3} />;
+  if (card.reward.isUltimate) return <Crown size={14} strokeWidth={2.4} />;
+  return <span>{card.day}</span>;
+}
+
+function Tag({ card }) {
+  if (card.state === 'TODAY') return <span className={`${styles.tag} ${styles.tagToday}`}>Today</span>;
+  if (card.state === 'MISSED') return <span className={`${styles.tag} ${styles.tagMissed}`}>Missed</span>;
+  if (card.isNext) return <span className={`${styles.tag} ${styles.tagNext}`}>Next</span>;
   if (card.reward.badge) {
-    const vip = card.reward.isUltimate;
-    return <span className={`${styles.badge} ${vip ? styles.badgeVip : styles.badgeType}`}>{card.reward.badge}</span>;
+    return <span className={`${styles.tag} ${card.reward.isUltimate ? styles.tagVip : styles.tagType}`}>{card.reward.badge}</span>;
   }
   return null;
 }
 
-function ActionButton({ card, onClaim, claimBusy, countdownMs }) {
-  if (card.status === 'CLAIMED') {
-    return (
-      <span className={`${styles.action} ${styles.actionClaimed}`}>
-        <CheckCircle2 size={14} /> Claimed
-      </span>
-    );
-  }
+function Action({ card, onClaim, claimBusy, countdownMs }) {
+  if (card.status === 'CLAIMED') return <span className={`${styles.action} ${styles.actionClaimed}`}>Claimed</span>;
   if (card.status === 'AVAILABLE') {
     return (
       <button type="button" className={`${styles.action} ${styles.actionClaim}`} onClick={onClaim} disabled={claimBusy} aria-busy={claimBusy}>
@@ -39,82 +31,64 @@ function ActionButton({ card, onClaim, claimBusy, countdownMs }) {
           <span className={styles.spinner} aria-hidden="true" />
         ) : (
           <>
-            <span className={styles.claimShort}>Claim</span>
-            <span className={styles.claimLong}>Claim Now</span>
-            <ChevronRight size={15} strokeWidth={2.6} className={styles.claimChevron} />
+            Claim <ChevronRight size={14} strokeWidth={2.6} />
           </>
         )}
       </button>
     );
   }
-  if (card.state === 'MISSED') {
-    return (
-      <span className={`${styles.action} ${styles.actionMissed}`}>
-        <XCircle size={14} /> Missed
-      </span>
-    );
-  }
+  if (card.state === 'MISSED') return <span className={`${styles.action} ${styles.actionMissed}`}>Missed</span>;
   if (card.isNext && card.unlocksAt) {
     return (
       <span className={`${styles.action} ${styles.actionTimer}`} aria-label={`Unlocks in ${formatDuration(countdownMs)}`}>
-        <Lock size={13} /> <span className={styles.timer}>{formatDuration(countdownMs)}</span>
-      </span>
-    );
-  }
-  if (card.reward.isUltimate) {
-    return (
-      <span className={`${styles.action} ${styles.actionLocked}`}>
-        <Lock size={13} /> <span className={styles.lockShort}>Locked</span>
-        <span className={styles.lockLong}>Unlocks on Day {card.day}</span>
+        {formatDuration(countdownMs)}
       </span>
     );
   }
   return (
     <span className={`${styles.action} ${styles.actionLocked}`}>
-      <Lock size={13} /> Locked
+      <Lock size={12} /> {card.reward.isUltimate ? `Day ${card.day}` : 'Locked'}
     </span>
   );
 }
 
-/** One streak day. State, status, value and badge come straight from the backend card object. */
-export default function RewardCard({ card, onClaim, claimBusy, countdownMs, justClaimed, wide = false }) {
+/** One step of the streak journey. State, status, value and badge come straight from the backend card object. */
+export default function RewardCard({ card, onClaim, claimBusy, countdownMs, justClaimed, isLast }) {
   const { reward } = card;
   const classNames = [
-    styles.card,
-    wide ? styles.wide : '',
+    styles.step,
     reward.isUltimate ? styles.ultimate : '',
     card.state === 'CLAIMED' ? styles.claimed : '',
     card.state === 'TODAY' ? styles.available : '',
     card.state === 'MISSED' ? styles.missed : '',
     card.isNext ? styles.next : '',
+    isLast ? styles.last : '',
     justClaimed ? styles.justClaimed : '',
   ].join(' ');
-
-  let valueTone = styles.valuePurple;
-  if (card.state === 'CLAIMED') valueTone = styles.valueGreen;
-  else if (card.state === 'MISSED') valueTone = styles.valueMissed;
-  else if (card.state === 'TODAY' || reward.isUltimate) valueTone = styles.valueGold;
-  const animated = reward.assetType === 'gift-box' || reward.assetType === 'crown';
+  const unit = reward.rewardType === 'VES' ? 'VEs' : reward.subtitle;
 
   return (
-    <article className={classNames} aria-label={`Day ${card.day}: ${reward.displayValue} ${reward.subtitle}, ${card.state.toLowerCase()}`}>
-      <div className={styles.top}>
-        <span className={`${styles.dayPill} ${reward.isUltimate ? styles.dayPillGold : ''}`}>Day {card.day}</span>
-        <CornerBadge card={card} />
+    <li className={classNames} aria-label={`Day ${card.day}: ${reward.displayValue} ${reward.subtitle}, ${card.state.toLowerCase()}`}>
+      <span className={styles.node} aria-hidden="true">
+        <Node card={card} />
+      </span>
+      <div className={styles.card}>
+        <div className={styles.art}>
+          <img src={rewardImage(reward.assetType)} alt="" className={styles.image} loading="lazy" />
+        </div>
+        <div className={styles.info}>
+          <div className={styles.meta}>
+            <span className={styles.day}>Day {card.day}</span>
+            <Tag card={card} />
+          </div>
+          <p className={styles.value}>
+            {reward.displayValue} <span className={styles.unit}>{unit}</span>
+          </p>
+        </div>
+        <div className={styles.footer}>
+          <Action card={card} onClaim={onClaim} claimBusy={claimBusy} countdownMs={countdownMs} />
+        </div>
       </div>
-      <div className={styles.art}>
-        <img src={rewardImage(reward.assetType)} alt="" className={`${styles.image} ${animated ? styles.animated : ''}`} loading="lazy" />
-      </div>
-      <div className={styles.info}>
-        {wide && <p className={styles.title}>{reward.title}</p>}
-        <p className={`${styles.value} ${valueTone}`}>{reward.displayValue}</p>
-        <p className={styles.subtitle} title={reward.subtitle}>
-          {reward.subtitle}
-        </p>
-      </div>
-      <div className={styles.footer}>
-        <ActionButton card={card} onClaim={onClaim} claimBusy={claimBusy} countdownMs={countdownMs} />
-      </div>
-    </article>
+    </li>
   );
 }
