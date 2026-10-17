@@ -1,10 +1,22 @@
+/*
+ * Day card. Every card shares one vertical rhythm - top row, fixed-height art box, info block, action -
+ * so pills, images, values and buttons line up across the row whatever the reward or state.
+ * Sizes step up at 576 / 768 / 1200px; the ultimate card switches to a full-width row below 1200px (.wide).
+ */
 .card {
+  --card-pad-x: 8px;
+  --card-pad-y: 10px;
+  --art-h: 60px;
+  --chip-h: 22px;
+  --action-h: 34px;
+
   position: relative;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
   min-width: 0;
-  padding: 10px 6px 10px;
+  height: 100%;
+  padding: var(--card-pad-y) var(--card-pad-x);
   border-radius: 16px;
   border: 1px solid var(--vl-border);
   background:
@@ -15,8 +27,11 @@
   transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
 }
 
-.card:hover {
-  transform: translateY(-2px);
+@media (hover: hover) {
+  .card:hover {
+    transform: translateY(-3px);
+    border-color: var(--vl-border-strong);
+  }
 }
 
 /* ----- states ----- */
@@ -25,13 +40,12 @@
   background:
     radial-gradient(120px 90px at 50% 35%, rgba(34, 197, 94, 0.14), transparent 70%),
     linear-gradient(180deg, #0f1d18 0%, #0b0f14 100%);
-  box-shadow: var(--vl-shadow-card), 0 0 16px rgba(34, 197, 94, 0.12);
 }
 
 .available {
-  border-color: rgba(251, 191, 36, 0.8);
+  border-color: rgba(251, 191, 36, 0.85);
   background:
-    radial-gradient(130px 100px at 50% 35%, rgba(251, 191, 36, 0.16), transparent 70%),
+    radial-gradient(130px 100px at 50% 35%, rgba(251, 191, 36, 0.18), transparent 70%),
     linear-gradient(180deg, #221a10 0%, #120c14 100%);
   box-shadow: var(--vl-shadow-card), var(--vl-glow-gold);
   animation: breathe 3s ease-in-out infinite;
@@ -42,42 +56,51 @@
 }
 
 .ultimate {
-  border-color: rgba(251, 191, 36, 0.65);
+  border-color: rgba(251, 191, 36, 0.6);
   background:
     radial-gradient(140px 100px at 50% 35%, rgba(251, 191, 36, 0.14), transparent 70%),
     linear-gradient(180deg, #1c1510 0%, #100b16 100%);
-  box-shadow: var(--vl-shadow-card), 0 0 20px rgba(251, 191, 36, 0.14);
+  box-shadow: var(--vl-shadow-card), 0 0 20px rgba(251, 191, 36, 0.12);
 }
 
 .ultimate.claimed {
   border-color: rgba(34, 197, 94, 0.55);
 }
 
+.ultimate.available {
+  border-color: rgba(251, 191, 36, 0.85);
+}
+
 .justClaimed {
   animation: reveal 0.7s cubic-bezier(0.2, 0.9, 0.3, 1.3);
 }
 
-/* ----- top row ----- */
+/* ----- top row: day pill left, one status chip right, both the same height ----- */
 .top {
-  width: 100%;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
   gap: 4px;
-  min-height: 22px;
+  min-width: 0;
+  height: var(--chip-h);
 }
 
-.topSplit {
-  justify-content: space-between;
+.dayPill,
+.badge {
+  height: var(--chip-h);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  font-size: 0.66rem;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
 }
 
 .dayPill {
   flex-shrink: 0;
-  white-space: nowrap;
-  padding: 3px 8px;
-  border-radius: 999px;
-  font-size: 0.66rem;
-  font-weight: 700;
+  padding: 0 8px;
   color: #ede9fe;
   background: rgba(76, 29, 149, 0.55);
   border: 1px solid rgba(139, 92, 246, 0.3);
@@ -95,81 +118,52 @@
   color: #dcfce7;
 }
 
-.claimedMark {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  width: 20px;
-  height: 20px;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  color: #052e16;
-  background: var(--vl-green);
-  box-shadow: 0 0 10px rgba(34, 197, 94, 0.5);
-}
-
-.tab {
-  position: absolute;
-  top: -1px;
-  right: -1px;
-  padding: 3px 9px;
-  border-radius: 0 15px 0 10px;
-  font-size: 0.66rem;
+.badge {
+  min-width: 0;
+  padding: 0 7px;
+  overflow: hidden;
+  text-overflow: ellipsis;
   font-weight: 800;
 }
 
-.tabToday {
+.badgeDone {
+  flex-shrink: 0;
+  width: var(--chip-h);
+  padding: 0;
+  color: #052e16;
+  background: var(--vl-green);
+  box-shadow: 0 0 10px rgba(34, 197, 94, 0.45);
+}
+
+.badgeToday,
+.badgeVip {
   color: #2b1800;
   background: var(--vl-gold-grad);
 }
 
-.tabNext {
+.badgeNext,
+.badgeType {
   color: #ede9fe;
   background: linear-gradient(135deg, #7c3aed, #5b21b6);
 }
 
-.pill {
-  flex-shrink: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  padding: 2px 6px;
-  border-radius: 999px;
-  font-size: 0.58rem;
-  font-weight: 700;
-  color: #ede9fe;
-  background: linear-gradient(135deg, #7c3aed, #5b21b6);
+.badgeMissed {
+  color: #fff;
+  background: linear-gradient(135deg, #ef4444, #b91c1c);
 }
 
-.pillGold {
-  color: #2b1800;
-  background: var(--vl-gold-grad);
-}
-
-.nextCaption {
-  display: none;
-  margin-top: 4px;
-  font-size: 0.62rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--vl-purple-2);
-}
-
-/* ----- body ----- */
+/* ----- art: a fixed box, every asset is scaled into the same space ----- */
 .art {
-  width: 100%;
-  display: grid;
-  place-items: center;
-  margin: 6px 0 4px;
-  aspect-ratio: 1.25;
+  height: var(--art-h);
+  margin: 8px 0 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .image {
-  max-width: 82%;
-  max-height: 100%;
+  width: 100%;
+  height: 100%;
   object-fit: contain;
   filter: drop-shadow(0 8px 12px rgba(0, 0, 0, 0.45));
 }
@@ -179,28 +173,37 @@
 }
 
 .ultimate .image {
-  max-width: 94%;
   animation: float 4.5s ease-in-out infinite, crownGlow 3.5s ease-in-out infinite;
 }
 
-.title {
+/* ----- info ----- */
+.info {
+  min-width: 0;
+}
+
+.title,
+.subtitle {
   margin: 0;
-  font-size: 0.66rem;
-  letter-spacing: -0.01em;
-  font-weight: 600;
-  color: #f1edff;
-  white-space: nowrap;
+  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 100%;
+  white-space: nowrap;
+}
+
+.title {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: #f1edff;
 }
 
 .value {
-  margin: 2px 0 0;
+  margin: 2px 0 1px;
   font-family: var(--vl-font-display);
   font-weight: 800;
-  font-size: 1.35rem;
+  font-size: 1.3rem;
   line-height: 1.15;
+  font-variant-numeric: tabular-nums;
 }
 
 .valueGreen {
@@ -215,41 +218,55 @@
   color: var(--vl-purple-2);
 }
 
-.subtitle {
-  margin: 0 0 8px;
-  font-size: 0.6rem;
-  line-height: 1.25;
-  color: var(--vl-muted);
-  max-width: 100%;
+.valueMissed {
+  color: var(--vl-red);
 }
 
-/* ----- action ----- */
-.action {
+.subtitle {
+  font-size: 0.62rem;
+  line-height: 1.3;
+  color: var(--vl-muted);
+}
+
+/* ----- action: identical size in every state ----- */
+.footer {
   margin-top: auto;
+  padding-top: 10px;
+}
+
+.action {
   width: 100%;
-  min-height: 34px;
+  height: var(--action-h);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 4px;
-  padding: 6px 4px;
+  padding: 0 6px;
   border-radius: 10px;
+  border: 1px solid transparent;
   font-size: 0.72rem;
   font-weight: 700;
+  line-height: 1;
   white-space: nowrap;
+  overflow: hidden;
+}
+
+.action svg {
+  flex-shrink: 0;
 }
 
 .actionClaim {
-  border: 0;
   color: #2b1800;
   background: var(--vl-gold-grad);
-  box-shadow: 0 6px 16px rgba(245, 158, 11, 0.3);
+  box-shadow: 0 6px 16px rgba(245, 158, 11, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+  font-weight: 800;
   cursor: pointer;
-  transition: filter 0.2s, transform 0.15s;
+  transition: filter 0.2s, transform 0.15s, box-shadow 0.2s;
 }
 
 .actionClaim:hover:not(:disabled) {
   filter: brightness(1.08);
+  box-shadow: 0 8px 22px rgba(245, 158, 11, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.45);
 }
 
 .actionClaim:active:not(:disabled) {
@@ -261,15 +278,20 @@
   opacity: 0.85;
 }
 
+.claimLong,
+.claimChevron {
+  display: none;
+}
+
 .actionClaimed {
   color: var(--vl-green-2);
-  border: 1px solid rgba(34, 197, 94, 0.45);
+  border-color: rgba(34, 197, 94, 0.45);
   background: rgba(22, 101, 52, 0.18);
 }
 
 .actionLocked {
   color: var(--vl-dim);
-  border: 1px solid var(--vl-border);
+  border-color: var(--vl-border);
   background: rgba(29, 18, 55, 0.5);
 }
 
@@ -280,17 +302,19 @@
 
 .actionTimer {
   color: var(--vl-purple-3);
-  border: 1px solid rgba(139, 92, 246, 0.45);
+  border-color: rgba(139, 92, 246, 0.45);
   background: rgba(76, 29, 149, 0.28);
 }
 
-.action svg {
-  flex-shrink: 0;
+.actionMissed {
+  color: var(--vl-red);
+  border-color: rgba(248, 113, 113, 0.45);
+  background: rgba(127, 29, 29, 0.2);
 }
 
 .timer {
   font-variant-numeric: tabular-nums;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.01em;
 }
 
 .spinner {
@@ -302,27 +326,46 @@
   animation: spin 0.7s linear infinite;
 }
 
-/* ----- sizes ----- */
-@media (max-width: 359.98px) {
-  .value {
-    font-size: 1.25rem;
-  }
+/* ----- MISSED (backend state after a streak reset) ----- */
+.missed {
+  border-color: rgba(248, 113, 113, 0.55);
+  background:
+    radial-gradient(120px 90px at 50% 35%, rgba(248, 113, 113, 0.1), transparent 70%),
+    linear-gradient(180deg, #1d0f1a 0%, #110a14 100%);
 }
 
+.missed .image {
+  filter: grayscale(0.6) brightness(0.75);
+}
+
+/* ----- sizes ----- */
+/* Small phones: the reward-type chip ("Gift Card", "Coin") has no room beside the day pill. */
 @media (max-width: 575.98px) {
-  .actionTimer {
-    font-size: 0.66rem;
-    gap: 2px;
+  .badgeType {
+    display: none;
   }
 
   .actionTimer svg {
-    width: 11px;
+    display: none;
+  }
+}
+
+@media (min-width: 360px) {
+  .card {
+    --art-h: 68px;
+  }
+
+  .claimChevron {
+    display: block;
   }
 }
 
 @media (min-width: 576px) {
   .card {
-    padding: 12px 10px;
+    --card-pad-x: 10px;
+    --card-pad-y: 12px;
+    --art-h: 84px;
+    --action-h: 38px;
   }
 
   .title {
@@ -330,7 +373,7 @@
   }
 
   .value {
-    font-size: 1.55rem;
+    font-size: 1.5rem;
   }
 
   .subtitle {
@@ -339,73 +382,155 @@
 
   .action {
     font-size: 0.8rem;
-    min-height: 38px;
+  }
+
+  .claimShort {
+    display: none;
+  }
+
+  .claimLong {
+    display: inline;
   }
 }
 
 @media (min-width: 768px) {
   .card {
-    padding: 14px 12px;
+    --card-pad-x: 12px;
+    --card-pad-y: 14px;
+    --art-h: 100px;
+    --chip-h: 24px;
+    --action-h: 40px;
     border-radius: 18px;
   }
 
-  .nextCaption {
-    display: block;
-  }
-
-  .art {
-    aspect-ratio: auto;
-    height: 118px;
-  }
-
-  .art {
-    position: relative;
-  }
-
-  .image,
-  .ultimate .image {
-    position: absolute;
-    inset: 0;
-    margin: auto;
-    width: 84%;
-    height: 100%;
-    max-width: none;
-    max-height: none;
-    object-fit: contain;
-  }
-
   .dayPill {
-    font-size: 0.78rem;
-    padding: 4px 12px;
+    padding: 0 11px;
+    font-size: 0.76rem;
   }
 
-  .pill,
-  .tab {
-    font-size: 0.72rem;
+  .badge {
+    padding: 0 9px;
+    font-size: 0.7rem;
+  }
+
+  .badgeDone {
+    padding: 0;
+  }
+
+  .art {
+    margin: 10px 0 8px;
   }
 
   .title {
-    font-size: 0.9rem;
+    font-size: 0.88rem;
   }
 
   .value {
-    font-size: 1.9rem;
+    font-size: 1.75rem;
   }
 
   .subtitle {
-    font-size: 0.8rem;
+    font-size: 0.78rem;
+  }
+
+  .footer {
+    padding-top: 12px;
   }
 
   .action {
     font-size: 0.86rem;
-    min-height: 40px;
     border-radius: 12px;
   }
 }
 
 @media (min-width: 1200px) {
+  .card {
+    --art-h: 104px;
+  }
+
   .value {
-    font-size: 2rem;
+    font-size: 1.9rem;
+  }
+}
+
+/* ----- ultimate card as a full-width row (phones and tablets) ----- */
+@media (max-width: 1199.98px) {
+  .wide {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: var(--art-w) minmax(0, 1fr) var(--footer-w);
+    grid-template-areas:
+      'art top footer'
+      'art info footer';
+    grid-template-rows: auto 1fr;
+    align-items: center;
+    column-gap: 12px;
+    row-gap: 4px;
+    text-align: left;
+    --art-w: 76px;
+    --art-h: 72px;
+    --footer-w: 112px;
+  }
+
+  .wide .top {
+    grid-area: top;
+    justify-content: flex-start;
+    gap: 6px;
+    align-self: end;
+  }
+
+  .wide .art {
+    grid-area: art;
+    margin: 0;
+  }
+
+  .wide .info {
+    grid-area: info;
+    align-self: start;
+  }
+
+  .wide .value {
+    margin: 0;
+  }
+
+  .wide .footer {
+    grid-area: footer;
+    margin: 0;
+    padding: 0;
+  }
+}
+
+@media (max-width: 359.98px) {
+  .wide {
+    grid-template-columns: var(--art-w) minmax(0, 1fr);
+    grid-template-areas:
+      'art top'
+      'art info'
+      'footer footer';
+    --art-w: 64px;
+    --art-h: 64px;
+  }
+
+  .wide .footer {
+    padding-top: 10px;
+  }
+}
+
+@media (min-width: 576px) and (max-width: 1199.98px) {
+  .wide {
+    column-gap: 18px;
+    --art-w: 110px;
+    --art-h: 92px;
+    --footer-w: 180px;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1199.98px) {
+  .wide {
+    padding: 14px 22px;
+    --art-w: 140px;
+    --art-h: 108px;
+    --footer-w: 220px;
   }
 }
 
@@ -443,38 +568,4 @@
   to {
     transform: rotate(360deg);
   }
-}
-
-/* The decorative type pill ("Gift Card", "Coin") doesn't fit beside the day label on very narrow phones. */
-@media (max-width: 389.98px) {
-  .pill:not(.pillGold) {
-    display: none;
-  }
-}
-
-/* ----- MISSED (backend state after a streak reset) ----- */
-.missed {
-  border-color: rgba(248, 113, 113, 0.55);
-  background:
-    radial-gradient(120px 90px at 50% 35%, rgba(248, 113, 113, 0.1), transparent 70%),
-    linear-gradient(180deg, #1d0f1a 0%, #110a14 100%);
-}
-
-.missed .image {
-  filter: grayscale(0.6) brightness(0.75);
-}
-
-.tabMissed {
-  color: #fff;
-  background: linear-gradient(135deg, #ef4444, #b91c1c);
-}
-
-.valueMissed {
-  color: var(--vl-red);
-}
-
-.actionMissed {
-  color: var(--vl-red);
-  border: 1px solid rgba(248, 113, 113, 0.45);
-  background: rgba(127, 29, 29, 0.2);
 }

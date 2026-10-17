@@ -3,8 +3,8 @@
  * auth.service.js login): asserts behaviour is unchanged and the query-count optimisation holds,
  * rather than asserting on wall-clock time (which would be flaky).
  */
-const { request, createApp, setupDatabase, teardownDatabase, createUser, auth, getStreak } = require('./helpers');
-const { UserStreak, StreakConfig, AuditLog, User } = require('../src/models');
+const { request, createApp, setupDatabase, teardownDatabase, createUser, auth, getStreak, clock, startClaim, finalizeClaim } = require('./helpers');
+const { UserStreak, StreakConfig, AuditLog, User, ClaimSession } = require('../src/models');
 
 let app;
 beforeAll(async () => {
@@ -100,5 +100,31 @@ describe('Performance: fewer round trips without behaviour changes', () => {
     // The save genuinely never persisted - lastLoginAt must still be unset.
     const after = await User.findById(user.id);
     expect(after.lastLoginAt).toBeFalsy();
+  });
+  test('a normal claim confirm validates and locks the session in one update (no separate lookup)', async () => {
+    const { token, user } = await createUser(app);
+    const start = await startClaim(app, token).expect(202);
+    clock.advanceTestClock((start.body.claimSession.durationSeconds + 1) * 1000);
+
+    const findSpy = jest.spyOn(ClaimSession, 'findOne');
+    const res = await finalizeClaim(app, token, { claimSessionId: start.body.claimSession.id }).expect(200);
+    expect(findSpy).not.toHaveBeenCalled();
+    findSpy.mockRestore();
+
+    expect(res.body.claim).toMatchObject({ day: 1 });
+    const session = await ClaimSession.findOne({ sessionId: start.body.claimSession.id });
+    expect(session.status).toBe('COMPLETED');
+    // The request audit still lands even though it is no longer awaited before the work starts.
+    expect(await AuditLog.countDocuments({ event: 'STREAK_CLAIM_REQUEST', userId: user.id })).toBe(2);
+  });
+
+  test('an early confirm still returns CPA_NOT_COMPLETED and leaves the session claimable', async () => {
+    const { token } = await createUser(app);
+    const start = await startClaim(app, token).expect(202);
+    const early = await finalizeClaim(app, token, { claimSessionId: start.body.claimSession.id }).expect(425);
+    expect(early.body.error.code).toBe('CPA_NOT_COMPLETED');
+
+    clock.advanceTestClock((start.body.claimSession.durationSeconds + 1) * 1000);
+    await finalizeClaim(app, token, { claimSessionId: start.body.claimSession.id }).expect(200);
   });
 });

@@ -3,9 +3,14 @@
   align-items: center;
   justify-content: center;
   gap: 10px;
-  margin: 18px 0 14px;
+  margin: 16px 0 12px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--vl-border);
+  background: linear-gradient(90deg, rgba(76, 29, 149, 0.08), rgba(76, 29, 149, 0.3), rgba(76, 29, 149, 0.08));
   color: #ddd6fe;
-  font-size: 0.86rem;
+  font-size: 0.84rem;
+  line-height: 1.45;
   text-align: center;
 }
 
@@ -33,7 +38,8 @@
 
 @media (min-width: 768px) {
   .message {
-    font-size: 1rem;
-    margin: 26px 0 18px;
+    font-size: 0.98rem;
+    margin: 22px 0 16px;
+    padding: 12px 20px;
   }
 }

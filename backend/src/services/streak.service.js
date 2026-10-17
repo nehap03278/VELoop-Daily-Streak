@@ -271,22 +271,22 @@ async function assertEligible(state, user, requestedDay) {
     });
   }
 
+  // Both ledger lookups run in one round trip; the checks below still apply in the same order.
+  const [previous, already] = await Promise.all([
+    currentDay > 1 ? StreakClaim.exists({ userId: user._id, cycleId: streak.activeCycleId, day: currentDay - 1 }) : true,
+    evaluation.needsNewCycle ? null : StreakClaim.exists({ userId: user._id, cycleId: streak.activeCycleId, day: currentDay }),
+  ]);
+
   // Previous day claimed? Verified against the claim ledger, not just the counter.
-  if (currentDay > 1) {
-    const previous = await StreakClaim.exists({ userId: user._id, cycleId: streak.activeCycleId, day: currentDay - 1 });
-    if (!previous) {
-      throw new AppError(409, 'PREVIOUS_DAY_NOT_CLAIMED', `Day ${currentDay - 1} must be claimed first.`);
-    }
+  if (!previous) {
+    throw new AppError(409, 'PREVIOUS_DAY_NOT_CLAIMED', `Day ${currentDay - 1} must be claimed first.`);
   }
 
   // Required waiting period completed? (server time only)
   if (!evaluation.claimable) throw errors.locked(evaluation.unlockAt, currentDay);
 
   // Today's reward not already claimed?
-  if (!evaluation.needsNewCycle) {
-    const already = await StreakClaim.exists({ userId: user._id, cycleId: streak.activeCycleId, day: currentDay });
-    if (already) throw errors.alreadyClaimed();
-  }
+  if (already) throw errors.alreadyClaimed();
 
   // User account eligible?
   if (user.status !== 'ACTIVE') {
@@ -539,7 +539,8 @@ async function auditRejection(error, user, ctx, phase) {
  * Nothing is granted here - the reward is only granted by finalizeClaim once the server says the ad is done.
  */
 async function startClaim(user, { day }, ctx = {}) {
-  await audit('STREAK_CLAIM_REQUEST', { userId: user._id, req: ctx.req, metadata: { phase: 'START', requestedDay: day ?? null } });
+  // The request audit is written alongside the work (audit() never throws) and awaited before replying.
+  const requestAudit = audit('STREAK_CLAIM_REQUEST', { userId: user._id, req: ctx.req, metadata: { phase: 'START', requestedDay: day ?? null } });
   try {
     const state = await loadState(user._id, ctx);
     if (state.resetInfo) throw errors.streakReset();
@@ -548,6 +549,7 @@ async function startClaim(user, { day }, ctx = {}) {
 
     if (!config.requireCpaVerification) {
       const result = await grantReward({ user, state, target, claimSessionId: null, ctx });
+      await requestAudit;
       return { cpaRequired: false, ...result, idempotent: false };
     }
 
@@ -560,6 +562,7 @@ async function startClaim(user, { day }, ctx = {}) {
       readyAt: new Date(now.getTime() + config.cpaDemoSeconds * 1000),
       expiresAt: new Date(now.getTime() + config.claimSessionTtlMinutes * MINUTE),
     });
+    await requestAudit;
 
     return {
       cpaRequired: true,
@@ -575,6 +578,7 @@ async function startClaim(user, { day }, ctx = {}) {
       reward: rewardService.toRewardDTO(target.reward),
     };
   } catch (error) {
+    await requestAudit;
     await auditRejection(error, user, ctx, 'START');
     throw error;
   }
@@ -596,7 +600,7 @@ async function resultForClosedSession(session) {
  * Repeating the call with the same claimSessionId returns the original result (idempotent).
  */
 async function finalizeClaim(user, { claimSessionId, day }, ctx = {}) {
-  await audit('STREAK_CLAIM_REQUEST', {
+  const requestAudit = audit('STREAK_CLAIM_REQUEST', {
     userId: user._id,
     req: ctx.req,
     metadata: { phase: 'FINALIZE', claimSessionId: claimSessionId || null, requestedDay: day ?? null },
@@ -608,56 +612,86 @@ async function finalizeClaim(user, { claimSessionId, day }, ctx = {}) {
       if (config.requireCpaVerification) {
         throw new AppError(400, 'CPA_VERIFICATION_REQUIRED', 'Please complete the reward verification first.');
       }
+      await requestAudit;
       return startClaim(user, { day }, ctx);
     }
 
     const now = clock.now();
     // Scoped by the authenticated user: another user's session id is simply "not found".
-    const session = await ClaimSession.findOne({ sessionId: claimSessionId, userId: user._id });
-    if (!session) throw new AppError(404, 'CLAIM_SESSION_NOT_FOUND', 'This claim request was not found. Please try again.');
+    const owned = { sessionId: claimSessionId, userId: user._id };
 
-    if (session.status !== 'PENDING') {
-      const result = await resultForClosedSession(session);
-      await audit('DUPLICATE_CLAIM', { userId: user._id, req: ctx.req, metadata: { claimSessionId, idempotent: true } });
-      return result;
-    }
-    if (day !== undefined && day !== session.day) {
-      throw new AppError(400, 'DAY_MISMATCH', 'The requested day does not match this claim.');
-    }
-    if (now < session.readyAt) {
-      throw new AppError(425, 'CPA_NOT_COMPLETED', 'Reward verification is still in progress.', { readyAt: session.readyAt });
-    }
-    if (now >= session.expiresAt) {
-      await ClaimSession.updateOne({ _id: session._id, status: 'PENDING' }, { $set: { status: 'REJECTED', rejectionCode: 'CLAIM_SESSION_EXPIRED' } });
-      throw new AppError(410, 'CLAIM_SESSION_EXPIRED', 'This claim request has expired. Please try again.');
-    }
+    // Fast path (the normal confirm): a single conditional update both validates the session
+    // (pending, verification time elapsed, not expired, same day) and takes ownership of it, so
+    // concurrent finalize calls can't both proceed. The streak state loads in the same round trip.
+    const [lockResult, stateResult] = await Promise.allSettled([
+      ClaimSession.findOneAndUpdate(
+        {
+          ...owned,
+          status: 'PENDING',
+          readyAt: { $lte: now },
+          expiresAt: { $gt: now },
+          ...(day !== undefined ? { day } : {}),
+        },
+        { $set: { status: 'PROCESSING' } },
+        { new: true }
+      ),
+      loadState(user._id, ctx),
+    ]);
+    if (lockResult.status === 'rejected') throw lockResult.reason;
+    let locked = lockResult.value;
+    let state = stateResult.status === 'fulfilled' ? stateResult.value : null;
 
-    // Atomically take ownership of the session so concurrent finalize calls can't both proceed.
-    const locked = await ClaimSession.findOneAndUpdate(
-      { _id: session._id, status: 'PENDING' },
-      { $set: { status: 'PROCESSING' } },
-      { new: true }
-    );
-    if (!locked) return resultForClosedSession(await ClaimSession.findById(session._id));
+    if (!locked) {
+      // Slow path: explain why the session could not be taken.
+      const session = await ClaimSession.findOne(owned);
+      if (!session) throw new AppError(404, 'CLAIM_SESSION_NOT_FOUND', 'This claim request was not found. Please try again.');
+
+      if (session.status !== 'PENDING') {
+        const result = await resultForClosedSession(session);
+        await audit('DUPLICATE_CLAIM', { userId: user._id, req: ctx.req, metadata: { claimSessionId, idempotent: true } });
+        await requestAudit;
+        return result;
+      }
+      if (day !== undefined && day !== session.day) {
+        throw new AppError(400, 'DAY_MISMATCH', 'The requested day does not match this claim.');
+      }
+      if (now < session.readyAt) {
+        throw new AppError(425, 'CPA_NOT_COMPLETED', 'Reward verification is still in progress.', { readyAt: session.readyAt });
+      }
+      if (now >= session.expiresAt) {
+        await ClaimSession.updateOne({ _id: session._id, status: 'PENDING' }, { $set: { status: 'REJECTED', rejectionCode: 'CLAIM_SESSION_EXPIRED' } });
+        throw new AppError(410, 'CLAIM_SESSION_EXPIRED', 'This claim request has expired. Please try again.');
+      }
+
+      // The session became valid between the two reads; take it the long way.
+      locked = await ClaimSession.findOneAndUpdate({ _id: session._id, status: 'PENDING' }, { $set: { status: 'PROCESSING' } }, { new: true });
+      if (!locked) return resultForClosedSession(await ClaimSession.findById(session._id));
+      state = null;
+    }
 
     try {
-      const state = await loadState(user._id, ctx);
+      if (!state) {
+        if (stateResult.status === 'rejected' && lockResult.value) throw stateResult.reason;
+        state = await loadState(user._id, ctx);
+      }
       if (state.resetInfo) throw errors.streakReset();
-      const target = await assertEligible(state, user, session.day);
-      if (target.cycleNumber !== session.cycleNumber) {
+      const target = await assertEligible(state, user, locked.day);
+      if (target.cycleNumber !== locked.cycleNumber) {
         throw new AppError(409, 'CLAIM_SESSION_STALE', 'Your streak changed since this claim started. Please refresh.');
       }
-      const result = await grantReward({ user, state, target, claimSessionId: session.sessionId, ctx });
+      const result = await grantReward({ user, state, target, claimSessionId: locked.sessionId, ctx });
+      await requestAudit;
       return { ...result, idempotent: false };
     } catch (error) {
       const update =
         error instanceof AppError
           ? { status: 'REJECTED', rejectionCode: error.code }
           : { status: 'PENDING' }; // unexpected failure: nothing was granted, allow a retry
-      await ClaimSession.updateOne({ _id: session._id, status: 'PROCESSING' }, { $set: update });
+      await ClaimSession.updateOne({ _id: locked._id, status: 'PROCESSING' }, { $set: update });
       throw error;
     }
   } catch (error) {
+    await requestAudit;
     await auditRejection(error, user, ctx, 'FINALIZE');
     throw error;
   }

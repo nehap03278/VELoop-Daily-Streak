@@ -62,6 +62,9 @@ export default function DailyStreakPage() {
   if (!data) return <ErrorState error={error} onRetry={retry} />;
 
   const justClaimedDay = claimFlow.phase === 'success' ? claimFlow.result?.claim.day : null;
+  // Display-only preview so the claim dialog shows the reward before /claim/start answers; the backend's own reward replaces it.
+  const claimableCard = data.rewards.find((card) => card.status === 'AVAILABLE');
+  const previewReward = claimableCard ? { ...claimableCard.reward, day: claimableCard.day } : null;
 
   return (
     <div className={styles.page}>
@@ -107,7 +110,7 @@ export default function DailyStreakPage() {
         </div>
       )}
 
-      <ClaimModal flow={claimFlow} onClose={claimFlow.close} />
+      <ClaimModal flow={claimFlow} previewReward={previewReward} onClose={claimFlow.close} />
       <HistoryModal open={historyOpen} onClose={() => setHistoryOpen(false)} />
     </div>
   );

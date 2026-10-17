@@ -19,31 +19,17 @@
 }
 
 /* ---------- Day cards ----------
-   Mobile / tablet: 4 cards on the first row, 3 wider cards on the second (as in the mobile design).
-   Very small phones (< 360px): 2 columns, Day 7 spans the full width.
-   Desktop (>= 1200px): all 7 in one row (as in the desktop design). */
+   Every regular day card has the same width: 3 per row on phones and tablets (2 on very small phones),
+   all 7 in one row on desktop (>= 1200px). Below 1200px the ultimate card spans the row (RewardCard .wide). */
 .cardGrid {
   display: grid;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
 }
 
-.cardGrid > * {
-  grid-column: span 3;
-}
-
-.cardGrid > :nth-child(n + 5) {
-  grid-column: span 4;
-}
-
 @media (max-width: 359.98px) {
-  .cardGrid > *,
-  .cardGrid > :nth-child(n + 5) {
-    grid-column: span 6;
-  }
-
-  .cardGrid > :nth-child(7) {
-    grid-column: span 12;
+  .cardGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -65,7 +51,7 @@
   }
 
   .cardGrid {
-    gap: 14px;
+    gap: 16px;
   }
 }
 
@@ -78,11 +64,6 @@
   .cardGrid {
     grid-template-columns: repeat(7, minmax(0, 1fr));
     gap: 14px;
-  }
-
-  .cardGrid > *,
-  .cardGrid > :nth-child(n + 5) {
-    grid-column: auto;
   }
 }
 
