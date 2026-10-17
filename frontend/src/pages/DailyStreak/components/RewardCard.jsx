@@ -115,7 +115,7 @@ export default function RewardCard({ card, onClaim, claimBusy, countdownMs, just
             <Tag card={card} />
           </div>
           <p className={styles.value}>
-            {reward.displayValue} <span className={styles.unit}>{unit}</span>
+            <span className={styles.amount}>{reward.displayValue}</span> <span className={styles.unit}>{unit}</span>
           </p>
         </div>
         <div className={styles.footer}>

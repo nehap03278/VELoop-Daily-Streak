@@ -282,6 +282,48 @@
   animation: spin 0.7s linear infinite;
 }
 
+/* Phones: ring + headline side by side, chips get their own full-width row. */
+@media (max-width: 575.98px) {
+  .top {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    column-gap: 14px;
+    align-items: center;
+  }
+
+  .ring {
+    grid-row: 1 / 3;
+    width: 84px;
+    height: 84px;
+    padding: 6px;
+  }
+
+  .ringInner b {
+    font-size: 1.5rem;
+  }
+
+  .summary {
+    display: contents;
+  }
+
+  .kicker {
+    grid-column: 2;
+    align-self: end;
+    padding-right: 40px;
+  }
+
+  .headline {
+    grid-column: 2;
+    align-self: start;
+    margin-bottom: 0;
+  }
+
+  .chips {
+    grid-column: 1 / -1;
+    margin-top: 14px;
+  }
+}
+
 @media (max-width: 359.98px) {
   .ring {
     width: 80px;

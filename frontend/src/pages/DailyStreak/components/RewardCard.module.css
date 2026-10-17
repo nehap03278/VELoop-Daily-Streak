@@ -250,13 +250,16 @@
 .value {
   margin: 2px 0 0;
   min-width: 0;
-  overflow-wrap: anywhere;
   font-family: var(--vl-font-display);
   font-size: 1.2rem;
   font-weight: 700;
   line-height: 1.2;
   letter-spacing: -0.01em;
   font-variant-numeric: tabular-nums;
+}
+
+.amount {
+  white-space: nowrap;
 }
 
 .unit {
@@ -733,6 +736,7 @@
 
 .ribbon {
   display: inline-flex;
+  white-space: nowrap;
   align-items: center;
   gap: 4px;
   height: 20px;
@@ -844,6 +848,43 @@
 
   .ultimate .value {
     font-size: 2.3rem;
+  }
+}
+
+/* ----- very narrow phones: status pill drops below the value ----- */
+@media (max-width: 379.98px) {
+  .card {
+    grid-template-columns: 48px minmax(0, 1fr);
+    grid-template-areas:
+      'art info'
+      'art footer';
+    row-gap: 8px;
+  }
+
+  .art {
+    grid-area: art;
+    width: 48px;
+    height: 48px;
+  }
+
+  .info {
+    grid-area: info;
+  }
+
+  .footer {
+    grid-area: footer;
+  }
+
+  .ultimate .card {
+    grid-template-columns: 84px minmax(0, 1fr);
+    grid-template-areas:
+      'art info'
+      'footer footer';
+  }
+
+  .ultimate .art {
+    width: 84px;
+    height: 84px;
   }
 }
 

@@ -7,6 +7,24 @@ import styles from './HistoryModal.module.css';
 
 const CYCLE_LABEL = { ACTIVE: 'In progress', COMPLETED: 'Completed', BROKEN: 'Missed' };
 
+/**
+ * Groups check-ins under their cycle (newest cycle first), so the same day number from two different cycles -
+ * e.g. Day 1 before and after a missed day - is never shown side by side.
+ */
+function groupByCycle(cycles, claims) {
+  const groups = cycles.map((cycle) => ({ cycle, claims: [] }));
+  const byNumber = new Map(groups.map((group) => [group.cycle.cycleNumber, group]));
+  claims.forEach((claim) => {
+    if (!byNumber.has(claim.cycleNumber)) {
+      const group = { cycle: { cycleNumber: claim.cycleNumber }, claims: [] };
+      byNumber.set(claim.cycleNumber, group);
+      groups.push(group);
+    }
+    byNumber.get(claim.cycleNumber).claims.push(claim);
+  });
+  return groups.sort((a, b) => b.cycle.cycleNumber - a.cycle.cycleNumber);
+}
+
 /** "Streak Calendar": the user's claim history and cycles, straight from GET /api/daily-streak/history. */
 export default function HistoryModal({ open, onClose }) {
   const [state, setState] = useState({ status: 'idle', data: null, error: null });
@@ -40,45 +58,53 @@ export default function HistoryModal({ open, onClose }) {
 
         {state.status === 'error' && <p className={styles.error}>{state.error.message}</p>}
 
-        {state.status === 'ready' && (
-          <>
-            {state.data.cycles.length > 0 && (
-              <div className={styles.cycles}>
-                {state.data.cycles.map((cycle) => (
-                  <div key={cycle.cycleNumber} className={`${styles.cycle} ${styles[cycle.status.toLowerCase()]}`}>
-                    <span className={styles.cycleName}>Cycle {cycle.cycleNumber}</span>
-                    <span className={styles.cycleMeta}>
-                      {cycle.claimedDays}/{cycle.totalDays} days · {CYCLE_LABEL[cycle.status]}
-                      {cycle.missedDay ? ` (Day ${cycle.missedDay} missed)` : ''}
-                    </span>
-                    <span className={styles.cycleDate}>Started {formatDate(cycle.startedAt)}</span>
-                  </div>
-                ))}
-              </div>
-            )}
+        {state.status === 'ready' && state.data.claims.length === 0 && state.data.cycles.length === 0 && (
+          <p className={styles.empty}>No check-ins yet. Claim your Day 1 reward to start your streak!</p>
+        )}
 
-            <h3 className={styles.subTitle}>Recent check-ins</h3>
-            {state.data.claims.length === 0 ? (
-              <p className={styles.empty}>No check-ins yet. Claim your Day 1 reward to start your streak!</p>
-            ) : (
-              <ul className={styles.list}>
-                {state.data.claims.map((claim) => (
-                  <li key={claim.claimId} className={styles.row}>
-                    <span className={styles.day}>D{claim.day}</span>
-                    <div className={styles.rowBody}>
-                      <strong>
-                        {claim.reward.displayValue} {claim.reward.rewardType === 'VES' ? 'VEs' : claim.reward.subtitle}
-                      </strong>
-                      <span>
-                        Cycle {claim.cycleNumber} · {formatDateTime(claim.claimedAt)}
-                      </span>
-                    </div>
-                    <span className={styles.ref}>{claim.referenceId}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </>
+        {state.status === 'ready' && (
+          <div className={styles.groups}>
+            {groupByCycle(state.data.cycles, state.data.claims).map(({ cycle, claims }) => (
+              <section key={cycle.cycleNumber} className={`${styles.cycle} ${cycle.status ? styles[cycle.status.toLowerCase()] : ''}`}>
+                <header className={styles.cycleHead}>
+                  <span className={styles.cycleName}>Cycle {cycle.cycleNumber}</span>
+                  {cycle.status && (
+                    <span className={styles.cycleBadge}>
+                      {CYCLE_LABEL[cycle.status]}
+                      {cycle.missedDay ? ` Day ${cycle.missedDay}` : ''}
+                    </span>
+                  )}
+                </header>
+                {cycle.startedAt && (
+                  <p className={styles.cycleMeta}>
+                    {cycle.claimedDays}/{cycle.totalDays} days claimed · Started {formatDate(cycle.startedAt)}
+                  </p>
+                )}
+
+                {claims.length === 0 ? (
+                  <p className={styles.empty}>No check-ins in this cycle yet.</p>
+                ) : (
+                  <ul className={styles.list}>
+                    {claims.map((claim) => (
+                      <li key={claim.claimId} className={styles.row}>
+                        <span className={styles.day}>
+                          <small>Day</small>
+                          {claim.day}
+                        </span>
+                        <div className={styles.rowBody}>
+                          <strong>
+                            {claim.reward.displayValue} {claim.reward.rewardType === 'VES' ? 'VEs' : claim.reward.subtitle}
+                          </strong>
+                          <span>{formatDateTime(claim.claimedAt)}</span>
+                        </div>
+                        <span className={styles.ref}>{claim.referenceId}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </section>
+            ))}
+          </div>
         )}
       </div>
     </Modal>
