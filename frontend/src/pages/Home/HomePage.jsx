@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronRight, Gem, Gift, LogOut, Clock, RotateCcw, User } from 'lucide-react';
+import { CalendarCheck, ChevronRight, Clock, Crown, Flame, Gem, Gift, Lock, LogOut, Receipt, RotateCcw, User } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { getStatus } from '../../services/streakApi';
+import { getStreak } from '../../services/streakApi';
 import { getWallet, getTransactions, devTimeTravel, devResetMyStreak } from '../../services/walletApi';
 import Logo from '../../components/common/Logo';
 import flame from '../../assets/rewards/flame.webp';
+import heroCrown from '../../assets/rewards/hero-crown.webp';
+import { rewardImage } from '../../utils/rewardAssets';
 import { formatDateTime, formatNumber, streakTitle } from '../../utils/format';
 import styles from './HomePage.module.css';
 
@@ -14,13 +16,21 @@ const SHOW_DEV_TOOLS = import.meta.env.VITE_ENABLE_DEV_TOOLS === 'true';
 /** Rewards hub: wallet balances, streak entry point and the reward ledger - all loaded from the backend. */
 export default function HomePage() {
   const { user, logout } = useAuth();
-  const [state, setState] = useState({ status: 'loading', wallet: null, streak: null, transactions: [], error: null });
+  const [state, setState] = useState({ status: 'loading', wallet: null, streak: null, rewards: [], ultimate: null, transactions: [], error: null });
   const [devMessage, setDevMessage] = useState('');
 
   const load = useCallback(async () => {
     try {
-      const [wallet, status, transactions] = await Promise.all([getWallet(), getStatus(), getTransactions({ limit: 8 })]);
-      setState({ status: 'ready', wallet, streak: status.data.streak, transactions: transactions.items, error: null });
+      const [wallet, page, transactions] = await Promise.all([getWallet(), getStreak(), getTransactions({ limit: 6 })]);
+      setState({
+        status: 'ready',
+        wallet,
+        streak: page.data.streak,
+        rewards: page.data.rewards,
+        ultimate: page.data.ultimateReward,
+        transactions: transactions.items,
+        error: null,
+      });
     } catch (error) {
       setState((previous) => ({ ...previous, status: 'error', error }));
     }
@@ -41,7 +51,8 @@ export default function HomePage() {
     }
   }
 
-  const { wallet, streak, transactions } = state;
+  const { wallet, streak, rewards, ultimate, transactions } = state;
+  const claimed = rewards.filter((card) => card.state === 'CLAIMED').length;
 
   return (
     <main className={styles.page}>
@@ -99,43 +110,161 @@ export default function HomePage() {
           </div>
           <div className="col-12 col-md-6">
             <Link to="/daily-streak" className={styles.streakCard}>
-              <img src={flame} alt="" className={styles.flame} />
-              <div className={styles.streakBody}>
-                <p className={styles.cardLabel}>Daily Streak</p>
-                <strong className={state.status === 'loading' ? styles.shimmer : ''}>{streak ? streakTitle(streak.currentStreak) : ''}</strong>
-                <span>{streak ? (streak.claimable ? `Day ${streak.currentDay} reward is ready!` : `Day ${streak.currentDay} unlocks soon`) : ''}</span>
+              <div className={styles.streakTop}>
+                <img src={flame} alt="" className={styles.flame} />
+                <div className={styles.streakBody}>
+                  <p className={styles.cardLabel}>Daily Streak</p>
+                  <strong className={state.status === 'loading' ? styles.shimmer : ''}>{streak ? streakTitle(streak.currentStreak) : ''}</strong>
+                  <span>{streak ? (streak.claimable ? `Day ${streak.currentDay} reward is ready!` : `Day ${streak.currentDay} unlocks soon`) : ''}</span>
+                </div>
+                <span className={`${styles.cta} ${streak?.claimable ? styles.ctaReady : ''}`}>
+                  {streak?.claimable ? 'Claim' : 'Open'} <ChevronRight size={16} />
+                </span>
               </div>
-              <ChevronRight size={22} />
+              {rewards.length > 0 && (
+                <div className={styles.track} aria-label={`${claimed} of ${rewards.length} days claimed`}>
+                  {rewards.map((card) => (
+                    <span
+                      key={card.day}
+                      className={[
+                        styles.seg,
+                        card.state === 'CLAIMED' ? styles.segDone : '',
+                        card.state === 'TODAY' ? styles.segToday : '',
+                        card.reward.isUltimate ? styles.segGoal : '',
+                      ].join(' ')}
+                    />
+                  ))}
+                </div>
+              )}
             </Link>
           </div>
         </div>
 
-        <section className={styles.ledger}>
-          <h2 className={styles.sectionTitle}>Recent transactions</h2>
-          {state.status === 'ready' && transactions.length === 0 && <p className={styles.empty}>No transactions yet.</p>}
-          <ul className={styles.list}>
-            {transactions.map((txn) => (
-              <li key={txn.transactionId} className={styles.row}>
-                <div>
-                  <strong>{txn.description || txn.source}</strong>
-                  <span>
-                    {formatDateTime(txn.createdAt)} · {txn.referenceId}
+        {rewards.length > 0 && (
+          <section className={styles.week} aria-labelledby="week-title">
+            <div className={styles.sectionHead}>
+              <h2 id="week-title" className={styles.sectionTitle}>
+                This week’s rewards
+              </h2>
+              <Link to="/daily-streak" className={styles.seeAll}>
+                View journey <ChevronRight size={14} />
+              </Link>
+            </div>
+            <ol className={styles.tiles}>
+              {rewards.map((card) => (
+                <li
+                  key={card.day}
+                  className={[
+                    styles.tile,
+                    card.state === 'CLAIMED' ? styles.tileDone : '',
+                    card.state === 'TODAY' ? styles.tileToday : '',
+                    card.isNext ? styles.tileNext : '',
+                    card.reward.isUltimate ? styles.tileGoal : '',
+                  ].join(' ')}
+                >
+                  <span className={styles.tileDay}>Day {card.day}</span>
+                  <img src={rewardImage(card.reward.assetType)} alt="" className={styles.tileImg} loading="lazy" />
+                  <strong className={styles.tileValue}>{card.reward.displayValue}</strong>
+                  <span className={styles.tileState}>
+                    {card.state === 'CLAIMED' ? 'Claimed' : card.state === 'TODAY' ? 'Ready!' : card.isNext ? 'Next' : <Lock size={11} />}
                   </span>
+                </li>
+              ))}
+            </ol>
+          </section>
+        )}
+
+        <div className={styles.lower}>
+          <div className={styles.main}>
+            <section className={styles.ledger}>
+              <h2 className={styles.sectionTitle}>Recent transactions</h2>
+              {state.status === 'ready' && transactions.length === 0 && (
+                <div className={styles.empty}>
+                  <Receipt size={26} />
+                  <p>No rewards yet - claim Day 1 to see it here.</p>
                 </div>
-                <div className={styles.amount}>
-                  <strong>
-                    +{txn.currency === 'INR' ? '₹' : ''}
-                    {formatNumber(txn.amount)} {txn.currency === 'VES' ? 'VEs' : ''}
-                  </strong>
-                  <span>
-                    Balance {txn.currency === 'INR' ? '₹' : ''}
-                    {formatNumber(txn.balanceAfter)}
+              )}
+              <ul className={styles.list}>
+                {transactions.map((txn) => (
+                  <li key={txn.transactionId} className={styles.row}>
+                    <div>
+                      <strong>{txn.description || txn.source}</strong>
+                      <span>
+                        {formatDateTime(txn.createdAt)} · {txn.referenceId}
+                      </span>
+                    </div>
+                    <div className={styles.amount}>
+                      <strong>
+                        +{txn.currency === 'INR' ? '₹' : ''}
+                        {formatNumber(txn.amount)} {txn.currency === 'VES' ? 'VEs' : ''}
+                      </strong>
+                      <span>
+                        Balance {txn.currency === 'INR' ? '₹' : ''}
+                        {formatNumber(txn.balanceAfter)}
+                      </span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </section>
+
+            <section className={styles.how}>
+              <h2 className={styles.sectionTitle}>How it works</h2>
+              <ol>
+                <li>
+                  <span className={styles.howIcon}>
+                    <CalendarCheck size={16} />
                   </span>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </section>
+                  <div>
+                    <strong>Check in daily</strong>
+                    <small>Open Daily Streak and claim once every day.</small>
+                  </div>
+                </li>
+                <li>
+                  <span className={styles.howIcon}>
+                    <Flame size={16} />
+                  </span>
+                  <div>
+                    <strong>Grow your streak</strong>
+                    <small>Rewards get bigger each day you return.</small>
+                  </div>
+                </li>
+                <li>
+                  <span className={`${styles.howIcon} ${styles.howGold}`}>
+                    <Gift size={16} />
+                  </span>
+                  <div>
+                    <strong>Unlock the grand prize</strong>
+                    <small>Reach Day 7 for the ultimate gift card.</small>
+                  </div>
+                </li>
+              </ol>
+            </section>
+          </div>
+
+          <aside className={styles.side}>
+            {ultimate && (
+              <Link to="/daily-streak" className={styles.prize}>
+                <img src={heroCrown} alt="" className={styles.prizeCrown} />
+                <span className={styles.prizeLabel}>
+                  <Crown size={12} /> Grand prize · Day {ultimate.unlockDay}
+                </span>
+                <strong className={styles.prizeValue}>{ultimate.displayValue}</strong>
+                <span className={styles.prizeSub}>{ultimate.subtitle}</span>
+                <span className={styles.prizeBar}>
+                  <span style={{ width: `${rewards.length ? (claimed / rewards.length) * 100 : 0}%` }} />
+                </span>
+                <span className={styles.prizeMeta}>
+                  {ultimate.status === 'CLAIMED'
+                    ? 'Claimed - nice work!'
+                    : ultimate.status === 'AVAILABLE'
+                      ? 'Unlocked - claim it today!'
+                      : `${rewards.length - claimed} ${rewards.length - claimed === 1 ? 'day' : 'days'} to go`}
+                </span>
+              </Link>
+            )}
+          </aside>
+        </div>
 
         {SHOW_DEV_TOOLS && (
           <section className={styles.dev}>
