@@ -250,9 +250,7 @@
 .value {
   margin: 2px 0 0;
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
   font-family: var(--vl-font-display);
   font-size: 1.2rem;
   font-weight: 700;
@@ -262,6 +260,7 @@
 }
 
 .unit {
+  display: inline-block;
   font-family: var(--vl-font-body);
   font-size: 0.74rem;
   font-weight: 500;
@@ -774,7 +773,13 @@
 
 .ultimate .action {
   width: 100%;
-  height: 38px;
+  height: auto;
+  min-height: 38px;
+  padding: 7px 12px;
+  flex-wrap: wrap;
+  white-space: normal;
+  text-align: center;
+  line-height: 1.25;
   font-size: 0.8rem;
 }
 
